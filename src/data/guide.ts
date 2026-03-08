@@ -39,6 +39,10 @@ export const guideSections: GuideSection[] = [
         en: "Any personal medications",
         ru: "Личные лекарства при необходимости",
       },
+      {
+        en: "Voice recorder for integration sessions",
+        ru: "Диктофон для интеграционных сессий",
+      },
     ],
   },
   {
@@ -86,8 +90,8 @@ export const guideSections: GuideSection[] = [
         ru: "Аптечка первой помощи доступна в центре",
       },
       {
-        en: "Nearest hospital is 30 minutes away",
-        ru: "Ближайшая больница в 30 минутах езды",
+        en: "Nearest hospital is 5 minutes away",
+        ru: "Ближайшая больница в 5 минутах езды",
       },
     ],
   },
@@ -105,8 +109,8 @@ export const guideSections: GuideSection[] = [
         ru: "Мы организуем трансфер из Катманду (включен в пакет)",
       },
       {
-        en: "Drive to the center takes approximately 3-4 hours",
-        ru: "Дорога до центра занимает примерно 3-4 часа",
+        en: "Drive to the center takes approximately 1-2 hours",
+        ru: "Дорога до центра занимает примерно 1-2 часа",
       },
       {
         en: "Visa on arrival available for most nationalities",
@@ -128,6 +132,10 @@ export const guideSections: GuideSection[] = [
         ru: "Телефоны на беззвучном режиме; рекомендуется ограниченное использование",
       },
       {
+        en: "Phones are not allowed during Sacred Ceremonies",
+        ru: "Телефоны запрещены во время Священных церемоний",
+      },
+      {
         en: "Respect the privacy and experience of all participants",
         ru: "Уважайте приватность и опыт всех участников",
       },
@@ -146,6 +154,14 @@ export const guideSections: GuideSection[] = [
     title: { en: "After the Retreat", ru: "После ретрита" },
     icon: "leaf",
     items: [
+      {
+        en: "90-day post-retreat integration program with 4 online sessions",
+        ru: "90-дневная программа интеграции после ретрита с 4 онлайн-сессиями",
+      },
+      {
+        en: "Personal consultations with retreat facilitators available upon request",
+        ru: "Персональные консультации с проводниками ретрита доступны по запросу",
+      },
       {
         en: "Integration support available via our Telegram bot",
         ru: "Поддержка интеграции доступна через нашего Telegram-бота",
