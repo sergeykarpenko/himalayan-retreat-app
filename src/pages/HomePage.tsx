@@ -74,6 +74,18 @@ export function HomePage() {
         </p>
       </div>
 
+      <div className="mx-4 mb-4 flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+        <Calendar className="h-6 w-6 shrink-0 text-primary" />
+        <div>
+          <p className="text-xs text-muted-foreground">
+            {t("Next retreat", "Следующий ретрит")}
+          </p>
+          <p className="text-base font-medium">
+            {t("April 1 — 11, 2026", "1 — 11 апреля 2026")}
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         {quickLinks.map(({ to, icon: Icon, label, desc }) => (
           <Link
