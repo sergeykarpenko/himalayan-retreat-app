@@ -142,14 +142,24 @@ describe("Page rendering - EN", () => {
     expect(links).toHaveLength(4);
   });
 
-  test("TestimonialsPage: all testimonials rendered", () => {
+  test("TestimonialsPage: first 2 visible, rest locked for guests", () => {
     renderWithProviders(<TestimonialsPage />);
     expect(testimonials).toHaveLength(4);
+    // All names visible (locked ones show name too)
     for (const item of testimonials) {
       expect(screen.getByText(item.name.en)).toBeInTheDocument();
     }
+    // Only 2 clickable links for guests
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(2);
+  });
+
+  test("TestimonialsPage: all visible for logged-in user", () => {
+    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
+    renderWithProviders(<TestimonialsPage />);
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(4);
+    localStorage.removeItem("tg_user");
   });
 });
 
@@ -233,6 +243,7 @@ describe("Schedule tabs", () => {
 
 describe("Guide accordion", () => {
   beforeEach(() => localStorage.removeItem("language"));
+  afterEach(() => localStorage.removeItem("tg_user"));
 
   test("packing open by default with items visible", () => {
     renderWithProviders(<GuidePage />);
@@ -241,7 +252,14 @@ describe("Guide accordion", () => {
     ).toBeInTheDocument();
   });
 
-  test("click diet -> diet opens, packing closes", async () => {
+  test("guest: diet section is locked", () => {
+    renderWithProviders(<GuidePage />);
+    const dietButton = screen.getByText("Diet & Nutrition").closest("button");
+    expect(dietButton).toBeDisabled();
+  });
+
+  test("logged-in: click diet -> diet opens, packing closes", async () => {
+    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
     const user = userEvent.setup();
     renderWithProviders(<GuidePage />);
     expect(

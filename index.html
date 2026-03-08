@@ -15,5 +15,24 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Recovery: if app doesn't render in 5s, clear SW caches and reload
+      setTimeout(function() {
+        var root = document.getElementById("root");
+        if (root && root.children.length === 0 && "caches" in window) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.unregister(); });
+          });
+          caches.keys().then(function(names) {
+            Promise.all(names.map(function(n) { return caches.delete(n); })).then(function() {
+              if (!sessionStorage.getItem("sw-fix")) {
+                sessionStorage.setItem("sw-fix", "1");
+                window.location.reload();
+              }
+            });
+          });
+        }
+      }, 5000);
+    </script>
   </body>
 </html>

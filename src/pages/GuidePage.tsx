@@ -23,11 +23,23 @@ const iconMap: Record<string, any> = {
   leaf: Leaf,
 };
 
+// Guest: only "packing"
+// Logged in, not paid: + "diet", "health"
+// Paid: everything
+const GUEST_SECTIONS = new Set(["packing"]);
+const FREE_SECTIONS = new Set(["packing", "diet", "health"]);
+
 export function GuidePage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const isPaid = user?.paid === true;
   const [openSection, setOpenSection] = useState<string | null>("packing");
+
+  function isSectionLocked(id: string): boolean {
+    if (isPaid) return false;
+    if (!user) return !GUEST_SECTIONS.has(id);
+    return !FREE_SECTIONS.has(id);
+  }
 
   return (
     <div className="animate-fade-in">
@@ -43,31 +55,52 @@ export function GuidePage() {
       <div className="px-4 pb-8 space-y-2">
         {guideSections.map((section) => {
           const Icon = iconMap[section.icon] || Leaf;
-          const isOpen = openSection === section.id;
+          const locked = isSectionLocked(section.id);
+          const isOpen = !locked && openSection === section.id;
 
           return (
             <div
               key={section.id}
-              className="rounded-2xl border border-border bg-card overflow-hidden"
+              className={cn(
+                "rounded-2xl border border-border bg-card overflow-hidden",
+                locked && "opacity-50"
+              )}
             >
               <button
                 onClick={() =>
-                  setOpenSection(isOpen ? null : section.id)
+                  locked ? undefined : setOpenSection(isOpen ? null : section.id)
                 }
-                className="flex w-full items-center gap-3 p-4 text-left"
+                disabled={locked}
+                className={cn(
+                  "flex w-full items-center gap-3 p-4 text-left",
+                  locked && "cursor-not-allowed"
+                )}
               >
-                <Icon className="h-5 w-5 shrink-0 text-primary" />
+                {locked ? (
+                  <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Icon className="h-5 w-5 shrink-0 text-primary" />
+                )}
                 <span className="flex-1 text-sm font-medium">
                   {section.title[language]}
                 </span>
-                <span
-                  className={cn(
-                    "text-muted-foreground transition-transform text-xs",
-                    isOpen && "rotate-180"
-                  )}
-                >
-                  &#9662;
-                </span>
+                {locked ? (
+                  <span className="text-xs text-muted-foreground">
+                    {!user
+                      ? language === "ru" ? "Войдите" : "Sign in"
+                      : language === "ru" ? "Для участников" : "Participants"
+                    }
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "text-muted-foreground transition-transform text-xs",
+                      isOpen && "rotate-180"
+                    )}
+                  >
+                    &#9662;
+                  </span>
+                )}
               </button>
               {isOpen && (
                 <div className="px-4 pb-4 animate-fade-in">

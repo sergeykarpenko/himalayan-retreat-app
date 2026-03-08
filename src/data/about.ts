@@ -14,8 +14,8 @@ export const aboutText = {
     ru: "Священный Исцеляющий Центр в Непале",
   },
   description: {
-    en: "Nestled in the foothills of the Himalayas near Pokhara, our center offers transformative 11-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space at a 5-star lakeside resort with a team of 6 facilitators for groups of up to 12 participants.",
-    ru: "Расположенный у подножия Гималаев близ Покхары, наш центр предлагает трансформационные 11-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство в 5-звёздочном курорте на озере с командой из 6 фасилитаторов для групп до 12 участников.",
+    en: "Nestled in the foothills of the Himalayas in Nepal, our center offers transformative 11-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space at a 5-star lakeside resort with a team of 6 facilitators for groups of up to 12 participants.",
+    ru: "Расположенный в предгорьях Гималаев в Непале, наш центр предлагает трансформационные 11-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство в 5-звёздочном курорте на озере с командой из 6 фасилитаторов для групп до 12 участников.",
   },
 };
 
