@@ -7,7 +7,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl safe-top">
       <div className="flex items-center justify-between px-4 py-3">
         <h1 className="text-sm font-medium tracking-widest uppercase">
           Retreat

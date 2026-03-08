@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
@@ -19,7 +19,7 @@ import { Header } from "@/components/layout/Header";
 // ── Data integrity ──────────────────────────────────────────────
 
 describe("Data integrity", () => {
-  test("every schedule day has >= 3 items", () => {
+  test("every schedule group has >= 3 items", () => {
     for (const day of schedule) {
       expect(day.items.length).toBeGreaterThanOrEqual(3);
     }
@@ -102,6 +102,15 @@ describe("Page rendering - EN", () => {
     expect(screen.getByText("Welcome Circle")).toBeInTheDocument();
   });
 
+  test("SchedulePage: shows 5 tabs for 11-day retreat", () => {
+    renderWithProviders(<SchedulePage />);
+    expect(screen.getByText("Day 1")).toBeInTheDocument();
+    expect(screen.getByText("Days 2–5")).toBeInTheDocument();
+    expect(screen.getByText("Day 6")).toBeInTheDocument();
+    expect(screen.getByText("Days 7–10")).toBeInTheDocument();
+    expect(screen.getByText("Day 11")).toBeInTheDocument();
+  });
+
   test("MeditationsPage: all tracks rendered", () => {
     renderWithProviders(<MeditationsPage />);
     for (const track of meditations) {
@@ -167,7 +176,6 @@ describe("Language switching", () => {
         <HomePage />
       </>
     );
-    // Header shows "RU" button when lang is EN
     const toggle = screen.getByRole("button", { name: "RU" });
     await user.click(toggle);
     expect(screen.getByText("Гималайский Ретрит")).toBeInTheDocument();
@@ -193,13 +201,13 @@ describe("Language switching", () => {
 describe("Schedule tabs", () => {
   beforeEach(() => localStorage.removeItem("language"));
 
-  test("click Day 2 shows Deep Practice + Morning Yoga", async () => {
+  test("click Days 2-5 shows Sacred Ceremony + Morning Yoga", async () => {
     const user = userEvent.setup();
     renderWithProviders(<SchedulePage />);
-    const day2Button = screen.getByText("Day 2");
-    await user.click(day2Button);
-    expect(screen.getByText("Deep Practice")).toBeInTheDocument();
+    await user.click(screen.getByText("Days 2–5"));
+    expect(screen.getByText("Ceremonies — First Round")).toBeInTheDocument();
     expect(screen.getByText("Morning Yoga")).toBeInTheDocument();
+    expect(screen.getByText("Sacred Ceremony")).toBeInTheDocument();
   });
 });
 
@@ -218,20 +226,16 @@ describe("Guide accordion", () => {
   test("click diet -> diet opens, packing closes", async () => {
     const user = userEvent.setup();
     renderWithProviders(<GuidePage />);
-    // packing is open
     expect(
       screen.getByText("Comfortable loose clothing for meditation and yoga")
     ).toBeInTheDocument();
 
-    // click diet section
     await user.click(screen.getByText("Diet & Nutrition"));
 
-    // diet items visible
     expect(
       screen.getByText("Vegetarian meals are provided throughout the retreat")
     ).toBeInTheDocument();
 
-    // packing items gone
     expect(
       screen.queryByText("Comfortable loose clothing for meditation and yoga")
     ).not.toBeInTheDocument();

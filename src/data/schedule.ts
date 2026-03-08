@@ -6,14 +6,14 @@ export interface ScheduleItem {
 }
 
 export interface DaySchedule {
-  day: number;
+  tab: { en: string; ru: string };
   title: { en: string; ru: string };
   items: ScheduleItem[];
 }
 
 export const schedule: DaySchedule[] = [
   {
-    day: 1,
+    tab: { en: "Day 1", ru: "День 1" },
     title: { en: "Arrival & Opening", ru: "Прибытие и открытие" },
     items: [
       {
@@ -36,10 +36,10 @@ export const schedule: DaySchedule[] = [
       },
       {
         time: "17:30",
-        title: { en: "Opening Meditation", ru: "Открывающая медитация" },
+        title: { en: "Opening Integration", ru: "Открывающая интеграция" },
         description: {
-          en: "Guided meditation to set intentions",
-          ru: "Медитация для установки намерений",
+          en: "Group session to set intentions for the retreat",
+          ru: "Групповая сессия для установки намерений на ретрит",
         },
         icon: "sparkles",
       },
@@ -51,48 +51,82 @@ export const schedule: DaySchedule[] = [
     ],
   },
   {
-    day: 2,
-    title: { en: "Deep Practice", ru: "Глубокая практика" },
+    tab: { en: "Days 2–5", ru: "Дни 2–5" },
+    title: { en: "Ceremonies — First Round", ru: "Церемонии — первый раунд" },
     items: [
       {
-        time: "06:00",
+        time: "07:30",
         title: { en: "Morning Yoga", ru: "Утренняя йога" },
         icon: "sun",
       },
       {
-        time: "07:30",
-        title: { en: "Breakfast", ru: "Завтрак" },
-        icon: "utensils",
-      },
-      {
         time: "09:00",
-        title: {
-          en: "Past Life Regression Session",
-          ru: "Сеанс регрессии в прошлые жизни",
-        },
-        description: {
-          en: "Group hypnotherapy session with Serhii",
-          ru: "Групповой сеанс гипнотерапии с Сергием",
-        },
-        icon: "brain",
-      },
-      {
-        time: "12:00",
-        title: { en: "Lunch", ru: "Обед" },
+        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
         icon: "utensils",
       },
       {
-        time: "14:00",
-        title: { en: "Integration & Sharing", ru: "Интеграция и обсуждение" },
+        time: "10:00",
+        title: { en: "Integration Circle", ru: "Интеграционный круг" },
         description: {
-          en: "Process and share your experience in a safe space",
-          ru: "Осмысление и обсуждение опыта в безопасном пространстве",
+          en: "Group sharing and education session",
+          ru: "Групповое обсуждение и образовательная сессия",
         },
         icon: "message-circle",
       },
       {
-        time: "16:00",
-        title: { en: "Free Time / Nature Walk", ru: "Свободное время / Прогулка" },
+        time: "12:00",
+        title: { en: "Sacred Ceremony", ru: "Священная церемония" },
+        description: {
+          en: "Guided transformative experience with facilitators",
+          ru: "Трансформационный опыт под руководством ведущих",
+        },
+        icon: "sparkles",
+      },
+      {
+        time: "21:00",
+        title: { en: "Dinner", ru: "Ужин" },
+        icon: "utensils",
+      },
+      {
+        time: "22:00",
+        title: { en: "Rest", ru: "Отдых" },
+        icon: "moon",
+      },
+    ],
+  },
+  {
+    tab: { en: "Day 6", ru: "День 6" },
+    title: { en: "Rest & Recovery", ru: "Отдых и восстановление" },
+    items: [
+      {
+        time: "09:00",
+        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
+        icon: "utensils",
+      },
+      {
+        time: "10:00",
+        title: { en: "Integration Circle", ru: "Интеграционный круг" },
+        description: {
+          en: "Reflect on the first round of ceremonies",
+          ru: "Осмысление первого раунда церемоний",
+        },
+        icon: "message-circle",
+      },
+      {
+        time: "14:00",
+        title: { en: "Lunch", ru: "Обед" },
+        icon: "utensils",
+      },
+      {
+        time: "15:00",
+        title: {
+          en: "Free Time / Nature Walk",
+          ru: "Свободное время / Прогулка",
+        },
+        description: {
+          en: "Personal reflection, nature walks, journaling",
+          ru: "Личное осмысление, прогулки, записи в дневнике",
+        },
         icon: "mountain",
       },
       {
@@ -101,52 +135,68 @@ export const schedule: DaySchedule[] = [
         icon: "utensils",
       },
       {
-        time: "20:30",
-        title: { en: "Evening Meditation", ru: "Вечерняя медитация" },
+        time: "22:00",
+        title: { en: "Rest", ru: "Отдых" },
         icon: "moon",
       },
     ],
   },
   {
-    day: 3,
-    title: { en: "Healing & Release", ru: "Исцеление и отпускание" },
+    tab: { en: "Days 7–10", ru: "Дни 7–10" },
+    title: { en: "Ceremonies — Second Round", ru: "Церемонии — второй раунд" },
     items: [
       {
-        time: "06:00",
-        title: { en: "Morning Meditation", ru: "Утренняя медитация" },
+        time: "07:30",
+        title: { en: "Morning Yoga", ru: "Утренняя йога" },
         icon: "sun",
       },
       {
-        time: "07:30",
-        title: { en: "Breakfast", ru: "Завтрак" },
+        time: "09:00",
+        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
         icon: "utensils",
       },
       {
-        time: "09:00",
-        title: { en: "Exorcism & Energy Clearing", ru: "Экзорцизм и очищение энергии" },
+        time: "10:00",
+        title: { en: "Integration Circle", ru: "Интеграционный круг" },
         description: {
-          en: "Advanced healing session for deep release",
-          ru: "Продвинутый сеанс исцеления для глубокого отпускания",
+          en: "Group sharing and education session",
+          ru: "Групповое обсуждение и образовательная сессия",
         },
-        icon: "flame",
+        icon: "message-circle",
       },
       {
         time: "12:00",
-        title: { en: "Lunch", ru: "Обед" },
+        title: { en: "Sacred Ceremony", ru: "Священная церемония" },
+        description: {
+          en: "Guided transformative experience with facilitators",
+          ru: "Трансформационный опыт под руководством ведущих",
+        },
+        icon: "sparkles",
+      },
+      {
+        time: "21:00",
+        title: { en: "Dinner", ru: "Ужин" },
         icon: "utensils",
       },
       {
-        time: "14:00",
-        title: { en: "Individual Consultations", ru: "Индивидуальные консультации" },
-        description: {
-          en: "One-on-one sessions available by sign-up",
-          ru: "Индивидуальные сессии по предварительной записи",
-        },
-        icon: "user",
+        time: "22:00",
+        title: { en: "Rest", ru: "Отдых" },
+        icon: "moon",
+      },
+    ],
+  },
+  {
+    tab: { en: "Day 11", ru: "День 11" },
+    title: { en: "Closing & Departure", ru: "Закрытие и отъезд" },
+    items: [
+      {
+        time: "09:00",
+        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
+        icon: "utensils",
       },
       {
-        time: "17:00",
-        title: { en: "Closing Ceremony", ru: "Закрывающая церемония" },
+        time: "10:00",
+        title: { en: "Closing Session", ru: "Закрывающая сессия" },
         description: {
           en: "Gratitude circle, sharing, and farewell",
           ru: "Круг благодарности, обмен впечатлениями и прощание",
@@ -154,9 +204,9 @@ export const schedule: DaySchedule[] = [
         icon: "heart",
       },
       {
-        time: "19:00",
-        title: { en: "Farewell Dinner", ru: "Прощальный ужин" },
-        icon: "utensils",
+        time: "12:00",
+        title: { en: "Checkout", ru: "Выселение" },
+        icon: "door-open",
       },
     ],
   },

@@ -49,16 +49,16 @@ export function SchedulePage() {
         <div className="flex gap-2 mb-6">
           {schedule.map((d, i) => (
             <button
-              key={d.day}
+              key={d.tab.en}
               onClick={() => setActiveDay(i)}
               className={cn(
-                "flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors",
+                "flex-1 rounded-xl py-2.5 text-xs font-medium transition-colors",
                 activeDay === i
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               )}
             >
-              {t(`Day ${d.day}`, `День ${d.day}`)}
+              {d.tab[language]}
             </button>
           ))}
         </div>
