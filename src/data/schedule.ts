@@ -18,7 +18,7 @@ export const schedule: DaySchedule[] = [
     items: [
       {
         time: "14:00",
-        title: { en: "Check-in & Room Setup", ru: "Заселение и размещение" },
+        title: { en: "Arrival & Settling In", ru: "Прибытие и размещение" },
         description: {
           en: "Settle into your room, explore the center",
           ru: "Обустройтесь в комнате, осмотрите центр",
@@ -205,7 +205,7 @@ export const schedule: DaySchedule[] = [
       },
       {
         time: "12:00",
-        title: { en: "Checkout", ru: "Выселение" },
+        title: { en: "Farewell & Departure", ru: "Прощание и отъезд" },
         icon: "door-open",
       },
     ],

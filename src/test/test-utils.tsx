@@ -2,6 +2,7 @@ import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 interface Options extends Omit<RenderOptions, "wrapper"> {
   routerProps?: MemoryRouterProps;
@@ -13,7 +14,9 @@ export function renderWithProviders(ui: React.ReactElement, options: Options = {
     wrapper: ({ children }) => (
       <ThemeProvider attribute="class" defaultTheme="dark">
         <LanguageProvider>
-          <MemoryRouter {...routerProps}>{children}</MemoryRouter>
+          <AuthProvider>
+            <MemoryRouter {...routerProps}>{children}</MemoryRouter>
+          </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>
     ),

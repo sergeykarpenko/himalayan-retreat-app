@@ -6,6 +6,7 @@ import { schedule } from "@/data/schedule";
 import { teachers } from "@/data/about";
 import { guideSections } from "@/data/guide";
 import { meditations } from "@/data/meditations";
+import { testimonials } from "@/data/testimonials";
 
 import { BottomNav } from "@/components/layout/BottomNav";
 import { HomePage } from "@/pages/HomePage";
@@ -14,6 +15,7 @@ import { MeditationsPage } from "@/pages/MeditationsPage";
 import { GuidePage } from "@/pages/GuidePage";
 import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
+import { TestimonialsPage } from "@/pages/TestimonialsPage";
 import { Header } from "@/components/layout/Header";
 
 // ── Data integrity ──────────────────────────────────────────────
@@ -111,11 +113,13 @@ describe("Page rendering - EN", () => {
     expect(screen.getByText("Day 11")).toBeInTheDocument();
   });
 
-  test("MeditationsPage: all tracks rendered", () => {
+  test("MeditationsPage: all tracks rendered (logged in)", () => {
+    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
     renderWithProviders(<MeditationsPage />);
     for (const track of meditations) {
       expect(screen.getByText(track.title.en)).toBeInTheDocument();
     }
+    localStorage.removeItem("tg_user");
   });
 
   test("GuidePage: all 6 sections", () => {
@@ -134,6 +138,16 @@ describe("Page rendering - EN", () => {
 
   test("ContactPage: 4 contact options", () => {
     renderWithProviders(<ContactPage />);
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(4);
+  });
+
+  test("TestimonialsPage: all testimonials rendered", () => {
+    renderWithProviders(<TestimonialsPage />);
+    expect(testimonials).toHaveLength(4);
+    for (const item of testimonials) {
+      expect(screen.getByText(item.name.en)).toBeInTheDocument();
+    }
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(4);
   });
@@ -199,7 +213,11 @@ describe("Language switching", () => {
 // ── Schedule tabs ───────────────────────────────────────────────
 
 describe("Schedule tabs", () => {
-  beforeEach(() => localStorage.removeItem("language"));
+  beforeEach(() => {
+    localStorage.removeItem("language");
+    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
+  });
+  afterEach(() => localStorage.removeItem("tg_user"));
 
   test("click Days 2-5 shows Sacred Ceremony + Morning Yoga", async () => {
     const user = userEvent.setup();

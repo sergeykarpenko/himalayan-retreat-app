@@ -3,7 +3,7 @@ import {
   Calendar,
   Headphones,
   BookOpen,
-  ScrollText,
+  Star,
   MessageCircle,
   Mountain,
 } from "lucide-react";
@@ -36,10 +36,10 @@ const quickLinks = [
     desc: { en: "Our center & team", ru: "Центр и команда" },
   },
   {
-    to: "/guide",
-    icon: ScrollText,
-    label: { en: "Guidelines", ru: "Правила" },
-    desc: { en: "Rules & preparation", ru: "Правила и подготовка" },
+    to: "/testimonials",
+    icon: Star,
+    label: { en: "Testimonials", ru: "Отзывы" },
+    desc: { en: "Participant stories", ru: "Истории участников" },
   },
   {
     to: "/contact",

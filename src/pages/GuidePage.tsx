@@ -6,8 +6,10 @@ import {
   ScrollText,
   Leaf,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { guideSections } from "@/data/guide";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,8 @@ const iconMap: Record<string, any> = {
 
 export function GuidePage() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const isPaid = user?.paid === true;
   const [openSection, setOpenSection] = useState<string | null>("packing");
 
   return (
@@ -81,15 +85,25 @@ export function GuidePage() {
                     ))}
                   </ul>
                   {section.id === "diet" && (
-                    <a
-                      href="https://fasting.himalayanholytemple.net"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                    >
-                      {t("Fasting Guide", "Гайд по голоданию")}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                    isPaid ? (
+                      <a
+                        href="https://fasting.himalayanholytemple.net"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                      >
+                        {t("Fasting Guide", "Гайд по голоданию")}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground/50">
+                        <Lock className="h-3 w-3" />
+                        {t(
+                          "Fasting Guide — available for retreat participants",
+                          "Гайд по голоданию — доступен участникам ретрита"
+                        )}
+                      </span>
+                    )
                   )}
                 </div>
               )}

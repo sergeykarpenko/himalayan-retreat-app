@@ -13,8 +13,10 @@ import {
   Flame,
   User,
   Leaf,
+  Lock,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { schedule } from "@/data/schedule";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,7 @@ const iconMap: Record<string, any> = {
 
 export function SchedulePage() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [activeDay, setActiveDay] = useState(0);
   const day = schedule[activeDay];
 
@@ -46,22 +49,38 @@ export function SchedulePage() {
           {t("Schedule", "Расписание")}
         </h2>
 
-        <div className="flex gap-2 mb-6">
-          {schedule.map((d, i) => (
-            <button
-              key={d.tab.en}
-              onClick={() => setActiveDay(i)}
-              className={cn(
-                "flex-1 rounded-xl py-2.5 text-xs font-medium transition-colors",
-                activeDay === i
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
-            >
-              {d.tab[language]}
-            </button>
-          ))}
+        <div className="flex gap-2 mb-2">
+          {schedule.map((d, i) => {
+            const locked = i > 0 && !user;
+            return (
+              <button
+                key={d.tab.en}
+                onClick={() => !locked && setActiveDay(i)}
+                disabled={locked}
+                className={cn(
+                  "flex-1 rounded-xl py-2.5 text-xs font-medium transition-colors",
+                  locked
+                    ? "bg-secondary/30 text-muted-foreground/40 cursor-not-allowed"
+                    : activeDay === i
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                )}
+              >
+                {d.tab[language]}
+              </button>
+            );
+          })}
         </div>
+
+        {!user && (
+          <p className="text-xs text-muted-foreground/60 flex items-center gap-1.5 mb-3">
+            <Lock className="h-3 w-3" />
+            {t(
+              "Sign in to see the full schedule",
+              "Войдите, чтобы увидеть полное расписание"
+            )}
+          </p>
+        )}
 
         <p className="text-sm text-muted-foreground mb-4">
           {day.title[language]}
