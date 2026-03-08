@@ -25,13 +25,20 @@ export function InstallBanner() {
 
   return (
     <div className="mx-4 mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 animate-fade-in">
-      <Download className="h-5 w-5 shrink-0 text-primary" />
-      <p className="flex-1 text-sm text-foreground/80">
-        {t(
-          "Add to Home Screen for the best experience",
-          "Добавьте на главный экран для лучшего опыта"
-        )}
-      </p>
+      <a
+        href="https://t.me/himalayan_retreat_bot?start=install"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex flex-1 items-center gap-3"
+      >
+        <Download className="h-5 w-5 shrink-0 text-primary" />
+        <p className="flex-1 text-sm text-foreground/80">
+          {t(
+            "Add to Home Screen for the best experience",
+            "Добавьте на главный экран для лучшего опыта"
+          )}
+        </p>
+      </a>
       <button onClick={dismiss} className="text-muted-foreground hover:text-foreground">
         <X className="h-4 w-4" />
       </button>

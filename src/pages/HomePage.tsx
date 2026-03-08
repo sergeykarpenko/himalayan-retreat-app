@@ -6,6 +6,7 @@ import {
   Star,
   MessageCircle,
   Mountain,
+  Phone,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { InstallBanner } from "@/components/shared/InstallBanner";
@@ -71,7 +72,7 @@ export function HomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 px-4 pb-8">
+      <div className="grid grid-cols-2 gap-3 px-4 pb-4">
         {quickLinks.map(({ to, icon: Icon, label, desc }) => (
           <Link
             key={label.en}
@@ -85,6 +86,18 @@ export function HomePage() {
             </span>
           </Link>
         ))}
+      </div>
+
+      <div className="px-4 pb-8">
+        <a
+          href="https://t.me/himalayan_retreat_bot?start=book"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full rounded-2xl bg-primary py-3.5 text-primary-foreground font-medium transition-opacity hover:opacity-90"
+        >
+          <Phone className="h-5 w-5" />
+          {t("Book a Retreat Spot", "Забронировать место")}
+        </a>
       </div>
     </div>
   );
