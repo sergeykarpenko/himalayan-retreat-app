@@ -4,6 +4,7 @@ import {
   Mail,
   ExternalLink,
   Shield,
+  GraduationCap,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -47,6 +48,16 @@ const contacts = [
     },
     href: "mailto:info@himalayanholytemple.org",
     cta: { en: "Send Email", ru: "Написать" },
+  },
+  {
+    icon: GraduationCap,
+    label: { en: "Exorcism & Hypnotherapy School", ru: "Школа экзорцизма и гипнотерапии" },
+    desc: {
+      en: "Community on Skool",
+      ru: "Сообщество на Skool",
+    },
+    href: "https://www.skool.com/exorcism-hypnotherapy-scool-5824",
+    cta: { en: "Join", ru: "Присоединиться" },
   },
 ];
 
