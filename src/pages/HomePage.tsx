@@ -22,7 +22,7 @@ const quickLinks = [
     to: "/meditations",
     icon: Headphones,
     label: { en: "Meditations", ru: "Медитации" },
-    desc: { en: "Guided audio", ru: "Аудио-медитации" },
+    desc: { en: "Audio & Books", ru: "Аудио и книги" },
   },
   {
     to: "/guide",

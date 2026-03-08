@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { House, Calendar, Headphones, BookOpen, Info } from "lucide-react";
+import { House, Calendar, Library, BookOpen, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: House, label: { en: "Home", ru: "Главная" } },
   { to: "/schedule", icon: Calendar, label: { en: "Schedule", ru: "Расписание" } },
-  { to: "/meditations", icon: Headphones, label: { en: "Meditate", ru: "Медитации" } },
+  { to: "/meditations", icon: Library, label: { en: "Meditate", ru: "Медитации" } },
   { to: "/guide", icon: BookOpen, label: { en: "Guide", ru: "Гайд" } },
   { to: "/about", icon: Info, label: { en: "About", ru: "О нас" } },
 ];

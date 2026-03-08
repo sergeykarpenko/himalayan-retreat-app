@@ -1,8 +1,8 @@
-import { Headphones, Clock, Lock, Send, Play, Pause, Download, Check, Loader2 } from "lucide-react";
+import { Headphones, Clock, Lock, Send, Play, Pause, Download, Check, Loader2, BookOpen } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { meditations, attunements, type Track } from "@/data/meditations";
+import { meditations, attunements, books, type Track, type Book } from "@/data/meditations";
 import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
 
 const AUDIO_CACHE = "audio-cache";
@@ -298,7 +298,7 @@ export function MeditationsPage() {
         </p>
       </div>
 
-      <div className="px-4 pb-8 space-y-3">
+      <div className="px-4 pb-4 space-y-3">
         {meditations.map((track) => (
           <div
             key={track.id}
@@ -322,6 +322,59 @@ export function MeditationsPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Книги */}
+      <div className="px-4 pt-4 pb-2">
+        <h3 className="text-lg font-light tracking-widest uppercase mb-1">
+          {t("Books", "Книги")}
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          {t("Books by our teachers", "Книги наших учителей")}
+        </p>
+      </div>
+
+      <div className="px-4 pb-8 space-y-3">
+        {books.map((book) => {
+          const canDownload = user && book.available;
+          const isComingSoon = !book.available;
+
+          const Wrapper = canDownload ? "a" : "div";
+          const wrapperProps = canDownload
+            ? { href: book.downloadUrl!, download: true, target: "_blank", rel: "noopener noreferrer" }
+            : {};
+
+          return (
+            <Wrapper
+              key={book.id}
+              {...(wrapperProps as any)}
+              className={`flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {book.title[language]}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {book.author[language]}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isComingSoon ? (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium px-2 py-0.5 rounded-full border border-border">
+                    {t("Soon", "Скоро")}
+                  </span>
+                ) : canDownload ? (
+                  <Download className="h-4 w-4 text-primary" />
+                ) : (
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </Wrapper>
+          );
+        })}
       </div>
     </div>
   );

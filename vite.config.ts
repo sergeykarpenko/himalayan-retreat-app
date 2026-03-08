@@ -46,6 +46,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         navigationPreload: false,
         navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/books\//],
         globPatterns: ["**/*.{js,css,html,png,webp,svg,woff2}"],
         runtimeCaching: [
           {

@@ -1,5 +1,13 @@
 const AUDIO_BASE = "https://bot-api.himalayanholytemple.net/audio";
 
+export interface Book {
+  id: string;
+  title: { en: string; ru: string };
+  author: { en: string; ru: string };
+  downloadUrl: string | null;
+  available: boolean;
+}
+
 export interface Track {
   id: string;
   title: { en: string; ru: string };
@@ -128,5 +136,22 @@ export const attunements: Track[] = [
     duration: "14:46",
     category: { en: "Attunement", ru: "Сонастройка" },
     audioUrl: `${AUDIO_BASE}/negativity-release.mp3`,
+  },
+];
+
+export const books: Book[] = [
+  {
+    id: "fenomen-suicida",
+    title: { en: "The Phenomenon of Suicide", ru: "Феномен суицида" },
+    author: { en: "Olena Ruta, Pavel Dmitriev", ru: "Елена Рута, Павел Дмитриев" },
+    downloadUrl: "/books/fenomen-suicida.pdf",
+    available: true,
+  },
+  {
+    id: "nepalese-book-of-dead",
+    title: { en: "Nepalese Book of the Dead", ru: "Непальская книга мёртвых" },
+    author: { en: "Sergiy Karpenko", ru: "Сергий Карпенко" },
+    downloadUrl: null,
+    available: false,
   },
 ];
