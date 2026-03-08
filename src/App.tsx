@@ -3,6 +3,8 @@ import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppShell } from "@/components/layout/AppShell";
+import { DesktopGate } from "@/components/DesktopGate";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { HomePage } from "@/pages/HomePage";
 import { SchedulePage } from "@/pages/SchedulePage";
 import { MeditationsPage } from "@/pages/MeditationsPage";
@@ -11,12 +13,19 @@ import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { TestimonialsPage } from "@/pages/TestimonialsPage";
 
+function AnalyticsTracker() {
+  useAnalytics();
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <LanguageProvider>
+        <DesktopGate>
         <AuthProvider>
         <BrowserRouter>
+          <AnalyticsTracker />
           <Routes>
             <Route element={<AppShell />}>
               <Route path="/" element={<HomePage />} />
@@ -30,6 +39,7 @@ function App() {
           </Routes>
         </BrowserRouter>
         </AuthProvider>
+        </DesktopGate>
       </LanguageProvider>
     </ThemeProvider>
   );

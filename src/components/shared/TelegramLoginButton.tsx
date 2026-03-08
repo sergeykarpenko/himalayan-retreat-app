@@ -40,8 +40,8 @@ export function TelegramLoginButton({ size = "large" }: Props) {
     tokenRef.current = token;
     setPolling(true);
 
-    // Open Telegram deep link
-    window.location.href = `https://t.me/himalayan_retreat_bot?start=login_${token}`;
+    // Open Telegram deep link in new window (keep PWA page for polling)
+    window.open(`https://t.me/himalayan_retreat_bot?start=login_${token}`, "_blank");
 
     // Start polling after a short delay (give user time to switch to Telegram)
     const startPolling = () => {

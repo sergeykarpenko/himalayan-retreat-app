@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { InstallBanner } from "@/components/shared/InstallBanner";
+import { TelegramBrowserBanner } from "@/components/shared/TelegramBrowserBanner";
 
 const quickLinks = [
   {
@@ -55,6 +56,7 @@ export function HomePage() {
 
   return (
     <div className="animate-fade-in">
+      <TelegramBrowserBanner />
       <InstallBanner />
 
       <div className="px-4 pt-8 pb-6 text-center">
