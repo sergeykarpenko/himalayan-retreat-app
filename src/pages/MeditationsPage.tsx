@@ -42,7 +42,7 @@ async function cacheTrack(url: string, onProgress?: (pct: number) => void): Prom
   }));
 }
 
-function AudioTrack({ track, language }: { track: Track; language: "en" | "ru" }) {
+function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; language: "en" | "ru"; activeTrackId: string | null; onPlay: (id: string) => void }) {
   const [playing, setPlaying] = useState(false);
   const [cached, setCached] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -54,6 +54,21 @@ function AudioTrack({ track, language }: { track: Track; language: "en" | "ru" }
       isTrackCached(track.audioUrl).then(setCached);
     }
   }, [track.audioUrl]);
+
+  // Pause when another track becomes active
+  useEffect(() => {
+    if (activeTrackId !== track.id && playing) {
+      audioRef.current?.pause();
+      setPlaying(false);
+    }
+  }, [activeTrackId, track.id, playing]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
 
   const handleDownload = useCallback(async () => {
     if (!track.audioUrl || cached || downloading) return;
@@ -78,6 +93,7 @@ function AudioTrack({ track, language }: { track: Track; language: "en" | "ru" }
       audioRef.current.pause();
       setPlaying(false);
     } else {
+      onPlay(track.id);
       audioRef.current.play();
       setPlaying(true);
     }
@@ -250,6 +266,8 @@ export function MeditationsPage() {
     );
   }
 
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
+
   const freeTracks = attunements.slice(0, FREE_TRACKS);
   const paidTracks = attunements.slice(FREE_TRACKS);
   const availableTracks = isPaid ? attunements : freeTracks;
@@ -274,11 +292,11 @@ export function MeditationsPage() {
 
       <div className="px-4 pb-4 space-y-3">
         {freeTracks.map((track) => (
-          <AudioTrack key={track.id} track={track} language={language} />
+          <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} />
         ))}
         {isPaid
           ? paidTracks.map((track) => (
-              <AudioTrack key={track.id} track={track} language={language} />
+              <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} />
             ))
           : paidTracks.map((track) => (
               <LockedTrack key={track.id} track={track} language={language} />

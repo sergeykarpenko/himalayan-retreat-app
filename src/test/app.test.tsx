@@ -1,11 +1,11 @@
-import { screen } from "@testing-library/react";
+import { screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
 import { schedule } from "@/data/schedule";
 import { teachers } from "@/data/about";
 import { guideSections } from "@/data/guide";
-import { meditations } from "@/data/meditations";
+import { meditations, attunements } from "@/data/meditations";
 import { testimonials } from "@/data/testimonials";
 
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -91,11 +91,11 @@ describe("BottomNav", () => {
 describe("Page rendering - EN", () => {
   beforeEach(() => localStorage.removeItem("language"));
 
-  test("HomePage: heading + 6 quick links", () => {
+  test("HomePage: heading + 6 quick links + booking CTA", () => {
     renderWithProviders(<HomePage />);
     expect(screen.getByText("Himalayan Retreat")).toBeInTheDocument();
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(6);
+    expect(links).toHaveLength(7);
   });
 
   test("SchedulePage: Day 1 active by default", () => {
@@ -275,5 +275,83 @@ describe("Guide accordion", () => {
     expect(
       screen.queryByText("Comfortable loose clothing for meditation and yoga")
     ).not.toBeInTheDocument();
+  });
+});
+
+// ── Audio playback ──────────────────────────────────────────────
+
+describe("Audio playback", () => {
+  let mockAudios: Array<{ play: ReturnType<typeof vi.fn>; pause: ReturnType<typeof vi.fn>; paused: boolean; onended: (() => void) | null; src: string }>;
+  let originalAudio: typeof Audio;
+
+  beforeEach(() => {
+    mockAudios = [];
+    originalAudio = globalThis.Audio;
+    globalThis.Audio = function MockAudio(this: any, src?: string) {
+      this.play = vi.fn().mockResolvedValue(undefined);
+      this.pause = vi.fn();
+      this.paused = true;
+      this.onended = null;
+      this.src = src || "";
+      mockAudios.push(this);
+      return this;
+    } as unknown as typeof Audio;
+    // Stub caches API to avoid errors
+    if (!globalThis.caches) {
+      (globalThis as any).caches = { open: vi.fn().mockResolvedValue({ match: vi.fn().mockResolvedValue(null) }) };
+    }
+    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
+  });
+
+  afterEach(() => {
+    globalThis.Audio = originalAudio;
+    localStorage.removeItem("tg_user");
+  });
+
+  test("only one track plays at a time", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<MeditationsPage />);
+
+    // attunements have audioUrl, so they render play buttons
+    const playButtons = screen.getAllByRole("button").filter(
+      (btn) => btn.querySelector(".lucide-play") || btn.querySelector("[class*='play']")
+    );
+
+    // Click first play button (track A)
+    const firstTrackTitle = attunements[0].title.en;
+    const secondTrackTitle = attunements[1].title.en;
+
+    // Find play buttons by proximity to track titles
+    const trackAContainer = screen.getByText(firstTrackTitle).closest("div.flex");
+    const trackBContainer = screen.getByText(secondTrackTitle).closest("div.flex");
+
+    const buttonA = trackAContainer!.querySelector("button")!;
+    const buttonB = trackBContainer!.querySelector("button")!;
+
+    await user.click(buttonA);
+    expect(mockAudios).toHaveLength(1);
+    expect(mockAudios[0].play).toHaveBeenCalled();
+
+    await user.click(buttonB);
+    expect(mockAudios).toHaveLength(2);
+    expect(mockAudios[1].play).toHaveBeenCalled();
+    // Track A should have been paused
+    expect(mockAudios[0].pause).toHaveBeenCalled();
+  });
+
+  test("audio stops on unmount", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithProviders(<MeditationsPage />);
+
+    const firstTrackTitle = attunements[0].title.en;
+    const trackAContainer = screen.getByText(firstTrackTitle).closest("div.flex");
+    const buttonA = trackAContainer!.querySelector("button")!;
+
+    await user.click(buttonA);
+    expect(mockAudios).toHaveLength(1);
+    expect(mockAudios[0].play).toHaveBeenCalled();
+
+    unmount();
+    expect(mockAudios[0].pause).toHaveBeenCalled();
   });
 });
