@@ -2,6 +2,7 @@ import { Headphones, Clock, Lock, Send, Play, Pause, Download, Check, Loader2, B
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackEvent } from "@/hooks/useAnalytics";
 import { meditations, attunements, books, type Track, type Book } from "@/data/meditations";
 import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
 
@@ -96,6 +97,7 @@ function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; 
       onPlay(track.id);
       audioRef.current.play();
       setPlaying(true);
+      trackEvent("audio_play", { track_id: track.id, track_title: track.title.ru || track.title.en });
     }
   };
 
@@ -366,6 +368,12 @@ export function MeditationsPage() {
             <Wrapper
               key={book.id}
               {...(wrapperProps as any)}
+              onClick={canDownload ? () => trackEvent("file_download", {
+                file_name: book.id,
+                file_extension: "pdf",
+                link_url: book.downloadUrl,
+                content_type: "book",
+              }) : undefined}
               className={`flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
