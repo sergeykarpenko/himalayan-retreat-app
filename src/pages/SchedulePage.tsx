@@ -55,7 +55,7 @@ export function SchedulePage() {
             <div
               key={day.date.en}
               className={cn(
-                "rounded-2xl border border-border bg-card overflow-hidden",
+                "rounded-2xl border border-border bg-card/55 backdrop-blur-md overflow-hidden",
                 locked && "opacity-50"
               )}
             >

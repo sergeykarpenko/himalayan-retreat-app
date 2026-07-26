@@ -62,7 +62,7 @@ export function GuidePage() {
             <div
               key={section.id}
               className={cn(
-                "rounded-2xl border border-border bg-card overflow-hidden",
+                "rounded-2xl border border-border bg-card/55 backdrop-blur-md overflow-hidden",
                 locked && "opacity-50"
               )}
             >

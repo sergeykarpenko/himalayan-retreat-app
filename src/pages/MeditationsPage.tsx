@@ -102,7 +102,7 @@ function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; 
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4">
       <button
         onClick={toggle}
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 transition-colors hover:bg-primary/20"
@@ -207,7 +207,7 @@ const FREE_TRACKS = 2;
 
 function LockedTrack({ track, language }: { track: Track; language: "en" | "ru" }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 opacity-50">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 opacity-50">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
         <Lock className="h-5 w-5 text-muted-foreground" />
       </div>
@@ -241,7 +241,7 @@ export function MeditationsPage() {
           </h2>
         </div>
         <div className="px-4 pb-8">
-          <div className="rounded-2xl border border-border bg-card p-8 text-center space-y-5">
+          <div className="rounded-2xl border border-border bg-card/55 backdrop-blur-md p-8 text-center space-y-5">
             <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-[#2AABEE]/10">
               <Send className="h-8 w-8 text-[#2AABEE]" />
             </div>
@@ -322,7 +322,7 @@ export function MeditationsPage() {
         {meditations.map((track) => (
           <div
             key={track.id}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 opacity-50"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 opacity-50"
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
               <Headphones className="h-5 w-5 text-primary" />
@@ -374,7 +374,7 @@ export function MeditationsPage() {
                 link_url: book.downloadUrl,
                 content_type: "book",
               }) : undefined}
-              className={`flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
+              className={`flex items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <BookOpen className="h-5 w-5 text-primary" />

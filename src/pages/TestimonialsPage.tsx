@@ -36,7 +36,7 @@ export function TestimonialsPage() {
               href={`https://youtube.com/watch?v=${item.videoId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex gap-4 rounded-2xl border border-border bg-card p-3 transition-colors hover:border-primary/30 hover:bg-primary/5"
+              className="group flex gap-4 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-3 transition-colors hover:border-primary/30 hover:bg-primary/5"
             >
               <div className="relative shrink-0 w-36 h-20 rounded-xl overflow-hidden bg-muted">
                 <img
@@ -62,7 +62,7 @@ export function TestimonialsPage() {
           {locked.map((item) => (
             <div
               key={item.id}
-              className="flex gap-4 rounded-2xl border border-border bg-card p-3 opacity-40"
+              className="flex gap-4 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-3 opacity-40"
             >
               <div className="relative shrink-0 w-36 h-20 rounded-xl overflow-hidden bg-muted">
                 <img
@@ -87,7 +87,7 @@ export function TestimonialsPage() {
         </div>
 
         {!user && locked.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-center space-y-3">
+          <div className="mt-6 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-5 text-center space-y-3">
             <p className="text-sm text-muted-foreground">
               {t(
                 "Sign in to see all testimonials",

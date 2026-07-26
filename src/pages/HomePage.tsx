@@ -8,9 +8,11 @@ import {
   Mountain,
   Phone,
 } from "lucide-react";
+import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { InstallBanner } from "@/components/shared/InstallBanner";
 import { TelegramBrowserBanner } from "@/components/shared/TelegramBrowserBanner";
+import { getDaysUntilRetreat, pluralizeRuDays } from "@/lib/retreatCountdown";
 
 const quickLinks = [
   {
@@ -53,6 +55,7 @@ const quickLinks = [
 
 export function HomePage() {
   const { t, language } = useLanguage();
+  const daysLeft = useMemo(() => getDaysUntilRetreat(), []);
 
   return (
     <div className="animate-fade-in">
@@ -83,6 +86,14 @@ export function HomePage() {
           <p className="text-base font-medium">
             {t("September 23 — October 2, 2026", "23 сентября — 2 октября 2026")}
           </p>
+          {daysLeft > 0 && (
+            <p className="text-xs text-muted-foreground/70 mt-0.5">
+              {t(
+                `${daysLeft} ${daysLeft === 1 ? "day" : "days"} until the gates open`,
+                `${daysLeft} ${pluralizeRuDays(daysLeft)} до открытия ворот`
+              )}
+            </p>
+          )}
         </div>
       </div>
 
@@ -91,7 +102,7 @@ export function HomePage() {
           <Link
             key={label.en}
             to={to}
-            className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 text-center transition-colors hover:border-primary/30 hover:bg-primary/5"
+            className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 text-center transition-colors hover:border-primary/30 hover:bg-primary/5"
           >
             <Icon className="h-6 w-6 text-primary transition-transform group-hover:scale-110" />
             <span className="text-sm font-medium">{label[language]}</span>

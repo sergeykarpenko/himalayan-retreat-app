@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { PyramidBackdrop } from "./PyramidBackdrop";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -15,6 +16,7 @@ export function AppShell() {
   return (
     <div className="flex min-h-[100dvh] flex-col">
       <ScrollToTop />
+      <PyramidBackdrop />
       <Header />
       <main className="flex-1 pb-20">
         <Outlet />
