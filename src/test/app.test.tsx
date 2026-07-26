@@ -21,18 +21,18 @@ import { Header } from "@/components/layout/Header";
 // ── Data integrity ──────────────────────────────────────────────
 
 describe("Data integrity", () => {
-  test("every schedule group has >= 3 items", () => {
-    for (const day of schedule) {
-      expect(day.items.length).toBeGreaterThanOrEqual(3);
-    }
+  test("schedule has 10 days", () => {
+    expect(schedule).toHaveLength(10);
   });
 
-  test("every schedule item has EN+RU titles", () => {
+  test("every schedule day has EN+RU date, title, and description", () => {
     for (const day of schedule) {
-      for (const item of day.items) {
-        expect(item.title.en).toBeTruthy();
-        expect(item.title.ru).toBeTruthy();
-      }
+      expect(day.date.en).toBeTruthy();
+      expect(day.date.ru).toBeTruthy();
+      expect(day.title.en).toBeTruthy();
+      expect(day.title.ru).toBeTruthy();
+      expect(day.description.en).toBeTruthy();
+      expect(day.description.ru).toBeTruthy();
     }
   });
 
@@ -91,26 +91,26 @@ describe("BottomNav", () => {
 describe("Page rendering - EN", () => {
   beforeEach(() => localStorage.removeItem("language"));
 
-  test("HomePage: heading + 6 quick links + booking CTA", () => {
+  test("HomePage: heading + 6 quick links + booking CTA + install banner link", () => {
     renderWithProviders(<HomePage />);
     expect(screen.getByText("Himalayan Retreat")).toBeInTheDocument();
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(7);
+    expect(links).toHaveLength(8);
   });
 
-  test("SchedulePage: Day 1 active by default", () => {
+  test("SchedulePage: Day 1 open by default", () => {
     renderWithProviders(<SchedulePage />);
-    expect(screen.getByText("Arrival & Opening")).toBeInTheDocument();
-    expect(screen.getByText("Welcome Circle")).toBeInTheDocument();
+    expect(screen.getByText("Arrival in Kathmandu")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Individual transfer and hotel check-in in Kathmandu/)
+    ).toBeInTheDocument();
   });
 
-  test("SchedulePage: shows 5 tabs for 11-day retreat", () => {
+  test("SchedulePage: shows all 10 days by date", () => {
     renderWithProviders(<SchedulePage />);
-    expect(screen.getByText("Day 1")).toBeInTheDocument();
-    expect(screen.getByText("Days 2–5")).toBeInTheDocument();
-    expect(screen.getByText("Day 6")).toBeInTheDocument();
-    expect(screen.getByText("Days 7–10")).toBeInTheDocument();
-    expect(screen.getByText("Day 11")).toBeInTheDocument();
+    for (const day of schedule) {
+      expect(screen.getByText(day.date.en)).toBeInTheDocument();
+    }
   });
 
   test("MeditationsPage: all tracks rendered (logged in)", () => {
@@ -136,10 +136,10 @@ describe("Page rendering - EN", () => {
     }
   });
 
-  test("ContactPage: 4 contact options", () => {
+  test("ContactPage: 5 contact options", () => {
     renderWithProviders(<ContactPage />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
   });
 
   test("TestimonialsPage: first 2 visible, rest locked for guests", () => {
@@ -176,7 +176,7 @@ describe("Page rendering - RU", () => {
 
   test("SchedulePage: Russian day titles", () => {
     renderWithProviders(<SchedulePage />);
-    expect(screen.getByText("Прибытие и открытие")).toBeInTheDocument();
+    expect(screen.getByText("Прилёт в Катманду")).toBeInTheDocument();
   });
 
   test("AboutPage: Russian teacher names", () => {
@@ -220,22 +220,37 @@ describe("Language switching", () => {
   });
 });
 
-// ── Schedule tabs ───────────────────────────────────────────────
+// ── Schedule accordion ───────────────────────────────────────────
 
-describe("Schedule tabs", () => {
+describe("Schedule accordion", () => {
   beforeEach(() => {
     localStorage.removeItem("language");
     localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
   });
   afterEach(() => localStorage.removeItem("tg_user"));
 
-  test("click Days 2-5 shows Sacred Ceremony + Morning Yoga", async () => {
+  test("guest: only day 1 is unlocked, rest show sign-in", () => {
+    localStorage.removeItem("tg_user");
+    renderWithProviders(<SchedulePage />);
+    const signInLabels = screen.getAllByText("Sign in");
+    expect(signInLabels).toHaveLength(schedule.length - 1);
+  });
+
+  test("logged-in: click day 4 opens First Ceremony, closes day 1", async () => {
     const user = userEvent.setup();
     renderWithProviders(<SchedulePage />);
-    await user.click(screen.getByText("Days 2–5"));
-    expect(screen.getByText("Ceremonies — First Round")).toBeInTheDocument();
-    expect(screen.getByText("Morning Yoga")).toBeInTheDocument();
-    expect(screen.getByText("Sacred Ceremony")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Individual transfer and hotel check-in in Kathmandu/)
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByText("First Ceremony — Full Moon"));
+
+    expect(
+      screen.getByText(/the first ceremony with the teacher plants/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Individual transfer and hotel check-in in Kathmandu/)
+    ).not.toBeInTheDocument();
   });
 });
 

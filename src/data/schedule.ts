@@ -1,213 +1,102 @@
-export interface ScheduleItem {
-  time: string;
-  title: { en: string; ru: string };
-  description?: { en: string; ru: string };
-  icon: string;
-}
-
 export interface DaySchedule {
-  tab: { en: string; ru: string };
+  date: { en: string; ru: string };
   title: { en: string; ru: string };
-  items: ScheduleItem[];
+  description: { en: string; ru: string };
+  icon: string;
 }
 
 export const schedule: DaySchedule[] = [
   {
-    tab: { en: "Day 1", ru: "День 1" },
-    title: { en: "Arrival & Opening", ru: "Прибытие и открытие" },
-    items: [
-      {
-        time: "14:00",
-        title: { en: "Arrival & Settling In", ru: "Прибытие и размещение" },
-        description: {
-          en: "Settle into your room, explore the center",
-          ru: "Обустройтесь в комнате, осмотрите центр",
-        },
-        icon: "door-open",
-      },
-      {
-        time: "16:00",
-        title: { en: "Welcome Circle", ru: "Приветственный круг" },
-        description: {
-          en: "Introduction, guidelines, and getting to know each other",
-          ru: "Знакомство, правила и представление участников",
-        },
-        icon: "users",
-      },
-      {
-        time: "17:30",
-        title: { en: "Opening Integration", ru: "Открывающая интеграция" },
-        description: {
-          en: "Group session to set intentions for the retreat",
-          ru: "Групповая сессия для установки намерений на ретрит",
-        },
-        icon: "sparkles",
-      },
-      {
-        time: "19:00",
-        title: { en: "Dinner", ru: "Ужин" },
-        icon: "utensils",
-      },
-    ],
+    date: { en: "Sep 23", ru: "23 сентября" },
+    title: { en: "Arrival in Kathmandu", ru: "Прилёт в Катманду" },
+    description: {
+      en: "Individual transfer and hotel check-in in Kathmandu, time to rest after the flight. In the evening, a walk through Thamel: incense, artisan shops, dinner in a traditional Nepali home.",
+      ru: "Индивидуальный трансфер и размещение в отеле Катманду, отдых после перелёта. Вечером — прогулка по кварталу Тамель: благовония, лавки мастеров, ужин в непальском доме.",
+    },
+    icon: "door-open",
   },
   {
-    tab: { en: "Days 2–5", ru: "Дни 2–5" },
-    title: { en: "Ceremonies — First Round", ru: "Церемонии — первый раунд" },
-    items: [
-      {
-        time: "07:30",
-        title: { en: "Morning Yoga", ru: "Утренняя йога" },
-        icon: "sun",
-      },
-      {
-        time: "09:00",
-        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
-        icon: "utensils",
-      },
-      {
-        time: "10:00",
-        title: { en: "Integration Circle", ru: "Интеграционный круг" },
-        description: {
-          en: "Group sharing and education session",
-          ru: "Групповое обсуждение и образовательная сессия",
-        },
-        icon: "message-circle",
-      },
-      {
-        time: "12:00",
-        title: { en: "Sacred Ceremony", ru: "Священная церемония" },
-        description: {
-          en: "Guided transformative experience with facilitators",
-          ru: "Трансформационный опыт под руководством ведущих",
-        },
-        icon: "sparkles",
-      },
-      {
-        time: "21:00",
-        title: { en: "Dinner", ru: "Ужин" },
-        icon: "utensils",
-      },
-      {
-        time: "22:00",
-        title: { en: "Rest", ru: "Отдых" },
-        icon: "moon",
-      },
-    ],
+    date: { en: "Sep 24", ru: "24 сентября" },
+    title: {
+      en: "Holy Sites & Flight to the Valley",
+      ru: "Святые места и перелёт в долину",
+    },
+    description: {
+      en: "Morning at the great UNESCO-listed stupa and Pashupatinath temple. A short flight to the mountain valley below Annapurna follows, with check-in at the complex. Evening: sauna, massage, time by the pool.",
+      ru: "Утро — великая ступа из списка ЮНЕСКО и Пашупатинатх. Днём — перелёт в горную долину под Аннапурной и заезд в комплекс. Вечером — сауна, массаж, отдых у бассейна.",
+    },
+    icon: "map-pin",
   },
   {
-    tab: { en: "Day 6", ru: "День 6" },
-    title: { en: "Rest & Recovery", ru: "Отдых и восстановление" },
-    items: [
-      {
-        time: "09:00",
-        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
-        icon: "utensils",
-      },
-      {
-        time: "10:00",
-        title: { en: "Integration Circle", ru: "Интеграционный круг" },
-        description: {
-          en: "Reflect on the first round of ceremonies",
-          ru: "Осмысление первого раунда церемоний",
-        },
-        icon: "message-circle",
-      },
-      {
-        time: "14:00",
-        title: { en: "Lunch", ru: "Обед" },
-        icon: "utensils",
-      },
-      {
-        time: "15:00",
-        title: {
-          en: "Free Time / Nature Walk",
-          ru: "Свободное время / Прогулка",
-        },
-        description: {
-          en: "Personal reflection, nature walks, journaling",
-          ru: "Личное осмысление, прогулки, записи в дневнике",
-        },
-        icon: "mountain",
-      },
-      {
-        time: "19:00",
-        title: { en: "Dinner", ru: "Ужин" },
-        icon: "utensils",
-      },
-      {
-        time: "22:00",
-        title: { en: "Rest", ru: "Отдых" },
-        icon: "moon",
-      },
-    ],
+    date: { en: "Sep 25", ru: "25 сентября" },
+    title: { en: "Settling-In Day", ru: "День настройки" },
+    description: {
+      en: "A quiet day: breathwork, yoga, a light breakfast. Time to set intentions and talk with the facilitators ahead of the ceremony cycle. Early rest — tomorrow is the full moon.",
+      ru: "Тихое утро: дыхательные практики, йога, лёгкий завтрак. День посвящён подготовке к циклу церемоний — намерение, беседы с ведущими, ранний отдых. Завтра полнолуние.",
+    },
+    icon: "leaf",
   },
   {
-    tab: { en: "Days 7–10", ru: "Дни 7–10" },
-    title: { en: "Ceremonies — Second Round", ru: "Церемонии — второй раунд" },
-    items: [
-      {
-        time: "07:30",
-        title: { en: "Morning Yoga", ru: "Утренняя йога" },
-        icon: "sun",
-      },
-      {
-        time: "09:00",
-        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
-        icon: "utensils",
-      },
-      {
-        time: "10:00",
-        title: { en: "Integration Circle", ru: "Интеграционный круг" },
-        description: {
-          en: "Group sharing and education session",
-          ru: "Групповое обсуждение и образовательная сессия",
-        },
-        icon: "message-circle",
-      },
-      {
-        time: "12:00",
-        title: { en: "Sacred Ceremony", ru: "Священная церемония" },
-        description: {
-          en: "Guided transformative experience with facilitators",
-          ru: "Трансформационный опыт под руководством ведущих",
-        },
-        icon: "sparkles",
-      },
-      {
-        time: "21:00",
-        title: { en: "Dinner", ru: "Ужин" },
-        icon: "utensils",
-      },
-      {
-        time: "22:00",
-        title: { en: "Rest", ru: "Отдых" },
-        icon: "moon",
-      },
-    ],
+    date: { en: "Sep 26", ru: "26 сентября" },
+    title: { en: "First Ceremony — Full Moon", ru: "Первая церемония. Полнолуние" },
+    description: {
+      en: "Morning practices, a light breakfast. During the day, the first ceremony with the teacher plants takes place in the complex's ceremonial hall, in complete silence. That night the full Harvest Moon rises over Annapurna, and the same day marks the start of Pitru Paksha — two weeks devoted to ancestors and lineage.",
+      ru: "Утренние практики, лёгкий завтрак. Днём — первая церемония с растениями-учителями в зале комплекса, в полной тишине. В эту ночь над Аннапурной восходит полная Урожайная луна, и в этот же день открывается Питру Пакша — две недели, посвящённые предкам и роду.",
+    },
+    icon: "sparkles",
   },
   {
-    tab: { en: "Day 11", ru: "День 11" },
-    title: { en: "Closing & Departure", ru: "Закрытие и отъезд" },
-    items: [
-      {
-        time: "09:00",
-        title: { en: "Light Breakfast", ru: "Лёгкий завтрак" },
-        icon: "utensils",
-      },
-      {
-        time: "10:00",
-        title: { en: "Closing Session", ru: "Закрывающая сессия" },
-        description: {
-          en: "Gratitude circle, sharing, and farewell",
-          ru: "Круг благодарности, обмен впечатлениями и прощание",
-        },
-        icon: "heart",
-      },
-      {
-        time: "12:00",
-        title: { en: "Farewell & Departure", ru: "Прощание и отъезд" },
-        icon: "door-open",
-      },
-    ],
+    date: { en: "Sep 27", ru: "27 сентября" },
+    title: { en: "Second Ceremony", ru: "Вторая церемония" },
+    description: {
+      en: "Morning practices, breakfast, integration circle. The second ceremony continues and deepens the journey during the day. In the evening, a performance by a Nepali folk ensemble in traditional dress.",
+      ru: "Утренние практики, завтрак, интеграционный круг. Днём — вторая церемония, продолжение и углубление пути. Вечером — выступление непальского коллектива в национальных костюмах.",
+    },
+    icon: "sparkles",
+  },
+  {
+    date: { en: "Sep 28", ru: "28 сентября" },
+    title: { en: "Third Ceremony", ru: "Третья церемония" },
+    description: {
+      en: "Morning practices, breakfast, integration circle, yoga. The third ceremony — the heart of the cycle — takes place during the day. In the evening, ancient Tibetan throat singing in the hall.",
+      ru: "Утренние практики, завтрак, интеграционный круг, йога. Днём — третья церемония, сердцевина цикла. Вечером — древнее тибетское горловое пение в зале.",
+    },
+    icon: "sparkles",
+  },
+  {
+    date: { en: "Sep 29", ru: "29 сентября" },
+    title: { en: "Fourth Ceremony", ru: "Четвёртая церемония" },
+    description: {
+      en: "Morning practices, breakfast, integration circle. The fourth and final ceremony of the cycle takes place during the day. In the evening, a gratitude circle and a fire show against the mountains.",
+      ru: "Утренние практики, завтрак, интеграционный круг. Днём — четвёртая, завершающая церемония цикла. Вечером — круг благодарности и фаер-шоу на фоне гор.",
+    },
+    icon: "sparkles",
+  },
+  {
+    date: { en: "Sep 30", ru: "30 сентября" },
+    title: { en: "Paragliding & Workshops", ru: "Параглайдинг и мастер-классы" },
+    description: {
+      en: "Morning tandem paragliding flight with an instructor over the mountain lake and Annapurna foothills. After lunch, singing-bowl and calligraphy workshops, pool, massage. In the evening, a closing concert and stories from a local storyteller.",
+      ru: "Утром — полёт на параглайдинге в тандеме с инструктором над горным озером и предгорьями Аннапурны. После обеда — мастер-классы поющих чаш и каллиграфии, бассейн, массаж. Вечером — концерт завершения цикла и истории сказителя долины.",
+    },
+    icon: "mountain",
+  },
+  {
+    date: { en: "Oct 1", ru: "1 октября" },
+    title: { en: "Wild Mountain Honey Hunt", ru: "Охота за диким горным мёдом" },
+    description: {
+      en: "A trip to the high mountains for an ancient practice of Himalayan tribes: honey gathered from cliff faces in full protective gear. The group prepares, watches local honey hunters at work, and can take part if they wish. Evening: farewell dinner.",
+      ru: "Выезд в высокогорный массив — древняя практика гималайских племён: мёд собирают со скальных уступов в полной защитной экипировке. Группа проходит подготовку, наблюдает за работой местных мастеров и при желании участвует в процессе. Вечером — прощальный ужин.",
+    },
+    icon: "sun",
+  },
+  {
+    date: { en: "Oct 2", ru: "2 октября" },
+    title: { en: "Departure", ru: "Выезд" },
+    description: {
+      en: "Breakfast, personalized farewell gifts, transfer to the local airport and a short flight back to Kathmandu. Guests with later flights can use a rest room at the hotel for one final walk through Thamel.",
+      ru: "Завтрак, вручение именных подарочных наборов, переезд в местный аэропорт и внутренний перелёт в Катманду. Гостям с поздними вылетами доступна комната отдыха в отеле и финальная прогулка по Тамелю.",
+    },
+    icon: "door-open",
   },
 ];

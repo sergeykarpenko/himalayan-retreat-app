@@ -81,7 +81,7 @@ export function HomePage() {
             {t("Next retreat", "Следующий ретрит")}
           </p>
           <p className="text-base font-medium">
-            {t("April 1 — 11, 2026", "1 — 11 апреля 2026")}
+            {t("September 23 — October 2, 2026", "23 сентября — 2 октября 2026")}
           </p>
         </div>
       </div>
