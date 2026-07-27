@@ -8,7 +8,7 @@ interface Props {
 
 export function TelegramLoginButton({ size = "large" }: Props) {
   const { t } = useLanguage();
-  const { trigger, polling, cancel } = useTelegramLogin();
+  const { loginUrl, onLinkClick, polling, cancel } = useTelegramLogin();
 
   // Inline text link for locked-content rows (e.g. schedule/guide accordions)
   if (size === "text") {
@@ -21,13 +21,14 @@ export function TelegramLoginButton({ size = "large" }: Props) {
       );
     }
     return (
-      <button
-        onClick={trigger}
+      <a
+        href={loginUrl}
+        onClick={onLinkClick}
         data-testid="telegram-login-inline"
         className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
       >
         {t("Sign in", "Войдите")}
-      </button>
+      </a>
     );
   }
 
@@ -41,14 +42,15 @@ export function TelegramLoginButton({ size = "large" }: Props) {
       );
     }
     return (
-      <button
-        onClick={trigger}
+      <a
+        href={loginUrl}
+        onClick={onLinkClick}
         data-testid="telegram-login"
         className="flex items-center justify-center rounded-full bg-[#2AABEE] p-1.5 text-white transition-opacity hover:opacity-90 active:opacity-80"
         aria-label={t("Login with Telegram", "Войти через Telegram")}
       >
         <Send className="h-4 w-4" />
-      </button>
+      </a>
     );
   }
 
@@ -75,8 +77,9 @@ export function TelegramLoginButton({ size = "large" }: Props) {
   }
 
   return (
-    <button
-      onClick={trigger}
+    <a
+      href={loginUrl}
+      onClick={onLinkClick}
       data-testid="telegram-login"
       className={`
         inline-flex items-center justify-center gap-2 rounded-full
@@ -87,6 +90,6 @@ export function TelegramLoginButton({ size = "large" }: Props) {
     >
       <Send className={isLarge ? "h-5 w-5" : "h-4 w-4"} />
       {t("Sign in with Telegram", "Войти через Telegram")}
-    </button>
+    </a>
   );
 }

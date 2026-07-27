@@ -8,14 +8,17 @@ function generateToken(): string {
 }
 
 /**
- * Shared Telegram login flow: opens the bot deep link, then polls
- * /api/auth-poll until the user confirms in Telegram. Used by
- * TelegramLoginButton and any other guest-facing "sign in" trigger.
+ * Shared Telegram login flow. `loginUrl` is meant for a real <a href>
+ * (not window.open) so mobile browsers treat the tap as a trusted,
+ * same-tab navigation and hand off straight to the Telegram app via
+ * its universal/app link instead of opening an extra browser tab that
+ * then asks to open Telegram. `onLinkClick` starts the poll against
+ * /api/auth-poll without blocking that navigation.
  */
 export function useTelegramLogin() {
   const { login } = useAuth();
   const [polling, setPolling] = useState(false);
-  const tokenRef = useRef<string | null>(null);
+  const [token, setToken] = useState(generateToken);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -24,7 +27,7 @@ export function useTelegramLogin() {
       intervalRef.current = null;
     }
     setPolling(false);
-    tokenRef.current = null;
+    setToken(generateToken());
   }, []);
 
   useEffect(() => {
@@ -33,19 +36,13 @@ export function useTelegramLogin() {
     };
   }, []);
 
-  const trigger = useCallback(() => {
-    const token = generateToken();
-    tokenRef.current = token;
+  const onLinkClick = useCallback(() => {
     setPolling(true);
-
-    // Open Telegram deep link in new window (keep PWA page for polling)
-    window.open(`https://t.me/himalayan_retreat_bot?start=login_${token}`, "_blank");
 
     const startPolling = () => {
       intervalRef.current = setInterval(async () => {
-        if (!tokenRef.current) return;
         try {
-          const res = await fetch(`/api/auth-poll?token=${tokenRef.current}`);
+          const res = await fetch(`/api/auth-poll?token=${token}`);
           if (res.status === 200) {
             const user = await res.json();
             if (user && user.id) {
@@ -62,7 +59,12 @@ export function useTelegramLogin() {
 
     setTimeout(startPolling, 3000);
     setTimeout(() => stopPolling(), 300000);
-  }, [login, stopPolling]);
+  }, [token, login, stopPolling]);
 
-  return { trigger, polling, cancel: stopPolling };
+  return {
+    loginUrl: `https://t.me/himalayan_retreat_bot?start=login_${token}`,
+    onLinkClick,
+    polling,
+    cancel: stopPolling,
+  };
 }

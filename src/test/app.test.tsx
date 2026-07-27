@@ -91,11 +91,11 @@ describe("BottomNav", () => {
 describe("Page rendering - EN", () => {
   beforeEach(() => localStorage.removeItem("language"));
 
-  test("HomePage: heading + 6 quick links + booking CTA + install banner link", () => {
+  test("HomePage: heading + 6 quick links + booking CTA + install banner + sign-in link", () => {
     renderWithProviders(<HomePage />);
     expect(screen.getByText("Himalayan Retreat")).toBeInTheDocument();
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(8);
+    expect(links).toHaveLength(9);
   });
 
   test("SchedulePage: Day 1 open by default", () => {
@@ -149,9 +149,9 @@ describe("Page rendering - EN", () => {
     for (const item of testimonials) {
       expect(screen.getByText(item.name.en)).toBeInTheDocument();
     }
-    // Only 2 clickable links for guests
+    // 2 clickable testimonial links + 1 sign-in link for guests
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
   });
 
   test("TestimonialsPage: all visible for logged-in user", () => {

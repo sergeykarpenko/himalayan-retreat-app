@@ -27,7 +27,7 @@ const iconMap: Record<string, any> = {
 export function SchedulePage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const { trigger } = useTelegramLogin();
+  const { loginUrl, onLinkClick } = useTelegramLogin();
   const [openDay, setOpenDay] = useState<number | null>(0);
 
   return (
@@ -38,16 +38,17 @@ export function SchedulePage() {
         </h2>
 
         {!user && (
-          <button
-            onClick={trigger}
-            className="text-xs text-muted-foreground/60 flex items-center gap-1.5 mb-2 hover:text-foreground transition-colors"
+          <a
+            href={loginUrl}
+            onClick={onLinkClick}
+            className="text-xs text-muted-foreground/60 flex items-center gap-1.5 mb-2 hover:text-foreground transition-colors w-fit"
           >
             <Lock className="h-3 w-3" />
             {t(
               "Sign in to see the full schedule",
               "Войдите, чтобы увидеть полное расписание"
             )}
-          </button>
+          </a>
         )}
       </div>
 

@@ -7,7 +7,7 @@ import { useTelegramLogin } from "@/hooks/useTelegramLogin";
 export function SignInBanner() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { trigger, polling } = useTelegramLogin();
+  const { loginUrl, onLinkClick, polling } = useTelegramLogin();
   const [dismissed, setDismissed] = useState(
     () => sessionStorage.getItem("signin-banner-dismissed") === "1"
   );
@@ -21,32 +21,33 @@ export function SignInBanner() {
 
   return (
     <div className="mx-4 mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 animate-fade-in">
-      <button
-        onClick={trigger}
-        disabled={polling}
-        className="flex flex-1 min-w-0 items-center gap-3 text-left active:opacity-70 transition-opacity disabled:active:opacity-100"
-      >
-        {polling ? (
+      {polling ? (
+        <div className="flex flex-1 min-w-0 items-center gap-3">
           <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
-        ) : (
-          <LogIn className="h-5 w-5 shrink-0 text-primary" />
-        )}
-        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground">
-            {polling
-              ? t("Press Start in Telegram, then come back here", "Нажмите Start в Telegram, затем вернитесь сюда")
-              : t("Sign in for full access", "Войдите для полного доступа")}
+            {t("Press Start in Telegram, then come back here", "Нажмите Start в Telegram, затем вернитесь сюда")}
           </p>
-          {!polling && (
+        </div>
+      ) : (
+        <a
+          href={loginUrl}
+          onClick={onLinkClick}
+          className="flex flex-1 min-w-0 items-center gap-3 text-left active:opacity-70 transition-opacity"
+        >
+          <LogIn className="h-5 w-5 shrink-0 text-primary" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              {t("Sign in for full access", "Войдите для полного доступа")}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t(
                 "Unlock the schedule, meditations and guide",
                 "Откройте расписание, медитации и гайд"
               )}
             </p>
-          )}
-        </div>
-      </button>
+          </div>
+        </a>
+      )}
       {!polling && (
         <button
           onClick={dismiss}
