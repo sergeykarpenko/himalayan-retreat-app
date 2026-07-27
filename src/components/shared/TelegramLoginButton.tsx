@@ -1,75 +1,35 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
-
-function generateToken(): string {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { useTelegramLogin } from "@/hooks/useTelegramLogin";
 
 interface Props {
-  size?: "icon" | "normal" | "large";
+  size?: "icon" | "normal" | "large" | "text";
 }
 
 export function TelegramLoginButton({ size = "large" }: Props) {
   const { t } = useLanguage();
-  const { login } = useAuth();
-  const [polling, setPolling] = useState(false);
-  const tokenRef = useRef<string | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { trigger, polling, cancel } = useTelegramLogin();
 
-  const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  // Inline text link for locked-content rows (e.g. schedule/guide accordions)
+  if (size === "text") {
+    if (polling) {
+      return (
+        <span data-testid="telegram-login-inline" className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin text-[#2AABEE]" />
+          {t("Check Telegram", "Проверьте Telegram")}
+        </span>
+      );
     }
-    setPolling(false);
-    tokenRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
-
-  const handleClick = () => {
-    const token = generateToken();
-    tokenRef.current = token;
-    setPolling(true);
-
-    // Open Telegram deep link in new window (keep PWA page for polling)
-    window.open(`https://t.me/himalayan_retreat_bot?start=login_${token}`, "_blank");
-
-    // Start polling after a short delay (give user time to switch to Telegram)
-    const startPolling = () => {
-      intervalRef.current = setInterval(async () => {
-        if (!tokenRef.current) return;
-        try {
-          const res = await fetch(`/api/auth-poll?token=${tokenRef.current}`);
-          if (res.status === 200) {
-            const user = await res.json();
-            if (user && user.id) {
-              login(user);
-              stopPolling();
-            }
-          }
-          // 202 = pending, keep polling
-        } catch {
-          // Network error, keep trying
-        }
-      }, 2000);
-    };
-
-    setTimeout(startPolling, 3000);
-
-    // Stop polling after 5 minutes
-    setTimeout(() => {
-      stopPolling();
-    }, 300000);
-  };
+    return (
+      <button
+        onClick={trigger}
+        data-testid="telegram-login-inline"
+        className="text-xs text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
+      >
+        {t("Sign in", "Войдите")}
+      </button>
+    );
+  }
 
   // Icon-only for header (compact)
   if (size === "icon") {
@@ -82,7 +42,7 @@ export function TelegramLoginButton({ size = "large" }: Props) {
     }
     return (
       <button
-        onClick={handleClick}
+        onClick={trigger}
         data-testid="telegram-login"
         className="flex items-center justify-center rounded-full bg-[#2AABEE] p-1.5 text-white transition-opacity hover:opacity-90 active:opacity-80"
         aria-label={t("Login with Telegram", "Войти через Telegram")}
@@ -105,7 +65,7 @@ export function TelegramLoginButton({ size = "large" }: Props) {
           )}
         </p>
         <button
-          onClick={stopPolling}
+          onClick={cancel}
           className="text-xs text-muted-foreground underline hover:text-foreground"
         >
           {t("Cancel", "Отмена")}
@@ -116,7 +76,7 @@ export function TelegramLoginButton({ size = "large" }: Props) {
 
   return (
     <button
-      onClick={handleClick}
+      onClick={trigger}
       data-testid="telegram-login"
       className={`
         inline-flex items-center justify-center gap-2 rounded-full

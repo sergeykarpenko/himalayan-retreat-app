@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
 import { guideSections } from "@/data/guide";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -66,32 +67,29 @@ export function GuidePage() {
                 locked && "opacity-50"
               )}
             >
-              <button
-                onClick={() =>
-                  locked ? undefined : setOpenSection(isOpen ? null : section.id)
-                }
-                disabled={locked}
-                className={cn(
-                  "flex w-full items-center gap-3 p-4 text-left",
-                  locked && "cursor-not-allowed"
-                )}
-              >
-                {locked ? (
+              {locked ? (
+                <div className="flex w-full items-center gap-3 p-4 text-left">
                   <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
-                ) : (
-                  <Icon className="h-5 w-5 shrink-0 text-primary" />
-                )}
-                <span className="flex-1 text-sm font-medium">
-                  {section.title[language]}
-                </span>
-                {locked ? (
-                  <span className="text-xs text-muted-foreground">
-                    {!user
-                      ? language === "ru" ? "Войдите" : "Sign in"
-                      : language === "ru" ? "Для участников" : "Participants"
-                    }
+                  <span className="flex-1 text-sm font-medium">
+                    {section.title[language]}
                   </span>
-                ) : (
+                  {!user ? (
+                    <TelegramLoginButton size="text" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {language === "ru" ? "Для участников" : "Participants"}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setOpenSection(isOpen ? null : section.id)}
+                  className="flex w-full items-center gap-3 p-4 text-left"
+                >
+                  <Icon className="h-5 w-5 shrink-0 text-primary" />
+                  <span className="flex-1 text-sm font-medium">
+                    {section.title[language]}
+                  </span>
                   <span
                     className={cn(
                       "text-muted-foreground transition-transform text-xs",
@@ -100,8 +98,8 @@ export function GuidePage() {
                   >
                     &#9662;
                   </span>
-                )}
-              </button>
+                </button>
+              )}
               {isOpen && (
                 <div className="px-4 pb-4 animate-fade-in">
                   <ul className="space-y-2">

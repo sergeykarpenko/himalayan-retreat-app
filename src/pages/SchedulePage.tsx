@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTelegramLogin } from "@/hooks/useTelegramLogin";
+import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
 import { schedule } from "@/data/schedule";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ const iconMap: Record<string, any> = {
 export function SchedulePage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { trigger } = useTelegramLogin();
   const [openDay, setOpenDay] = useState<number | null>(0);
 
   return (
@@ -35,13 +38,16 @@ export function SchedulePage() {
         </h2>
 
         {!user && (
-          <p className="text-xs text-muted-foreground/60 flex items-center gap-1.5 mb-2">
+          <button
+            onClick={trigger}
+            className="text-xs text-muted-foreground/60 flex items-center gap-1.5 mb-2 hover:text-foreground transition-colors"
+          >
             <Lock className="h-3 w-3" />
             {t(
               "Sign in to see the full schedule",
               "Войдите, чтобы увидеть полное расписание"
             )}
-          </p>
+          </button>
         )}
       </div>
 
@@ -59,34 +65,33 @@ export function SchedulePage() {
                 locked && "opacity-50"
               )}
             >
-              <button
-                onClick={() =>
-                  locked ? undefined : setOpenDay(isOpen ? null : i)
-                }
-                disabled={locked}
-                className={cn(
-                  "flex w-full items-center gap-3 p-4 text-left",
-                  locked && "cursor-not-allowed"
-                )}
-              >
-                {locked ? (
+              {locked ? (
+                <div className="flex w-full items-center gap-3 p-4 text-left">
                   <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
-                ) : (
-                  <Icon className="h-5 w-5 shrink-0 text-primary" />
-                )}
-                <div className="flex-1">
-                  <span className="block text-xs font-mono text-muted-foreground">
-                    {day.date[language]}
-                  </span>
-                  <span className="text-sm font-medium">
-                    {day.title[language]}
-                  </span>
+                  <div className="flex-1">
+                    <span className="block text-xs font-mono text-muted-foreground">
+                      {day.date[language]}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {day.title[language]}
+                    </span>
+                  </div>
+                  <TelegramLoginButton size="text" />
                 </div>
-                {locked ? (
-                  <span className="text-xs text-muted-foreground">
-                    {t("Sign in", "Войдите")}
-                  </span>
-                ) : (
+              ) : (
+                <button
+                  onClick={() => setOpenDay(isOpen ? null : i)}
+                  className="flex w-full items-center gap-3 p-4 text-left"
+                >
+                  <Icon className="h-5 w-5 shrink-0 text-primary" />
+                  <div className="flex-1">
+                    <span className="block text-xs font-mono text-muted-foreground">
+                      {day.date[language]}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {day.title[language]}
+                    </span>
+                  </div>
                   <span
                     className={cn(
                       "text-muted-foreground transition-transform text-xs",
@@ -95,8 +100,8 @@ export function SchedulePage() {
                   >
                     &#9662;
                   </span>
-                )}
-              </button>
+                </button>
+              )}
               {isOpen && (
                 <div className="px-4 pb-4 animate-fade-in">
                   <p className="text-sm text-foreground/80 leading-relaxed">

@@ -267,10 +267,12 @@ describe("Guide accordion", () => {
     ).toBeInTheDocument();
   });
 
-  test("guest: diet section is locked", () => {
+  test("guest: diet section is locked, shows clickable sign-in", () => {
     renderWithProviders(<GuidePage />);
-    const dietButton = screen.getByText("Diet & Nutrition").closest("button");
-    expect(dietButton).toBeDisabled();
+    expect(
+      screen.queryByText("Vegetarian meals are provided throughout the retreat")
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("telegram-login-inline").length).toBeGreaterThan(0);
   });
 
   test("logged-in: click diet -> diet opens, packing closes", async () => {

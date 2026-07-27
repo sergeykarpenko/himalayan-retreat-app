@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { InstallBanner } from "@/components/shared/InstallBanner";
 import { TelegramBrowserBanner } from "@/components/shared/TelegramBrowserBanner";
+import { SignInBanner } from "@/components/shared/SignInBanner";
 import { getDaysUntilRetreat, pluralizeRuDays } from "@/lib/retreatCountdown";
 
 const quickLinks = [
@@ -60,6 +61,7 @@ export function HomePage() {
   return (
     <div className="animate-fade-in">
       <TelegramBrowserBanner />
+      <SignInBanner />
       <InstallBanner />
 
       <div className="px-4 pt-8 pb-6 text-center">
