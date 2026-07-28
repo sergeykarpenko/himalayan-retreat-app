@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Download, X, ExternalLink } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isNativeApp } from "@/lib/platform";
 
 export function InstallBanner() {
   const { t } = useLanguage();
@@ -11,7 +12,7 @@ export function InstallBanner() {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as any).standalone;
     const dismissed = sessionStorage.getItem("install-dismissed");
-    if (!isStandalone && !dismissed) {
+    if (!isStandalone && !dismissed && !isNativeApp()) {
       setShow(true);
     }
   }, []);

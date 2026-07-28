@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Android TWA (Bubblewrap) — never commit the signing keystore or build output
+android-twa/*.keystore
+android-twa/*.apk
+android-twa/*.aab
+android-twa/*.apk.idsig
+android-twa/app/build
+android-twa/.gradle
+android-twa/build
+
+# iOS (Capacitor) build products
+ios/App/build
+ios/App/Pods
+ios/DerivedData
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

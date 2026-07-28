@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Globe, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isNativeApp } from "@/lib/platform";
 
 function isTelegramBrowser(): boolean {
   const w = window as any;
@@ -23,7 +24,7 @@ export function TelegramBrowserBanner() {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as any).standalone;
     const dismissed = sessionStorage.getItem("tg-browser-dismissed");
-    if (!isStandalone && !dismissed && isTelegramBrowser()) {
+    if (!isStandalone && !dismissed && !isNativeApp() && isTelegramBrowser()) {
       setShow(true);
     }
   }, []);

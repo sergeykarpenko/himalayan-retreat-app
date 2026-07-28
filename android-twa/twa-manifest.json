@@ -1,0 +1,43 @@
+{
+  "packageId": "net.himalayanholytemple.retreat",
+  "host": "app.himalayanholytemple.net",
+  "name": "Himalayan Retreat",
+  "launcherName": "Retreat",
+  "display": "standalone",
+  "themeColor": "#0A0A0B",
+  "themeColorDark": "#0A0A0B",
+  "navigationColor": "#0A0A0B",
+  "navigationColorDark": "#0A0A0B",
+  "navigationDividerColor": "#0A0A0B",
+  "navigationDividerColorDark": "#0A0A0B",
+  "backgroundColor": "#0A0A0B",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://app.himalayanholytemple.net/icons/icon-512.png",
+  "maskableIconUrl": "https://app.himalayanholytemple.net/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://app.himalayanholytemple.net/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}
