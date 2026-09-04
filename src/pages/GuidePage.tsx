@@ -7,15 +7,31 @@ import {
   Leaf,
   ExternalLink,
   Lock,
+  type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
-import { guideSections } from "@/data/guide";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const iconMap: Record<string, any> = {
+interface GuideSection {
+  id: string;
+  title: { en: string; ru: string };
+  icon: string;
+  items: { en: string; ru: string }[];
+}
+
+const SECTION_CATALOG = [
+  { id: "packing", title: { en: "What to Bring", ru: "Что взять с собой" } },
+  { id: "diet", title: { en: "Diet & Nutrition", ru: "Питание и диета" } },
+  { id: "health", title: { en: "Health & Safety", ru: "Здоровье и безопасность" } },
+  { id: "getting-there", title: { en: "Getting There", ru: "Как добраться" } },
+  { id: "rules", title: { en: "Guidelines", ru: "Правила" } },
+  { id: "after", title: { en: "After the Retreat", ru: "После ретрита" } },
+] as const;
+
+const iconMap: Record<string, LucideIcon> = {
   backpack: Backpack,
   apple: Apple,
   "heart-pulse": HeartPulse,
@@ -32,9 +48,39 @@ const FREE_SECTIONS = new Set(["packing", "diet", "health"]);
 
 export function GuidePage() {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isPaid = user?.paid === true;
   const [openSection, setOpenSection] = useState<string | null>("packing");
+  const [guideSections, setGuideSections] = useState<GuideSection[]>([]);
+  const [fastingGuideUrl, setFastingGuideUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading) return;
+    const controller = new AbortController();
+    fetch("/api/guide", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("guide_unavailable");
+        return response.json() as Promise<{
+          sections?: GuideSection[];
+          fastingGuideUrl?: string | null;
+        }>;
+      })
+      .then((payload) => {
+        setGuideSections(payload.sections ?? []);
+        setFastingGuideUrl(payload.fastingGuideUrl ?? null);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setGuideSections([]);
+          setFastingGuideUrl(null);
+        }
+      });
+    return () => controller.abort();
+  }, [authLoading, user?.id, user?.paid]);
 
   function isSectionLocked(id: string): boolean {
     if (isPaid) return false;
@@ -54,14 +100,16 @@ export function GuidePage() {
       </div>
 
       <div className="px-4 pb-8 space-y-2">
-        {guideSections.map((section) => {
-          const Icon = iconMap[section.icon] || Leaf;
-          const locked = isSectionLocked(section.id);
-          const isOpen = !locked && openSection === section.id;
+        {SECTION_CATALOG.map((catalogSection) => {
+          const section = guideSections.find((item) => item.id === catalogSection.id);
+          const displaySection = section ?? { ...catalogSection, icon: "leaf", items: [] };
+          const Icon = iconMap[displaySection.icon] || Leaf;
+          const locked = !section || isSectionLocked(displaySection.id);
+          const isOpen = !locked && openSection === displaySection.id;
 
           return (
             <div
-              key={section.id}
+              key={displaySection.id}
               className={cn(
                 "rounded-2xl border border-border bg-card/55 backdrop-blur-md overflow-hidden",
                 locked && "opacity-50"
@@ -71,7 +119,7 @@ export function GuidePage() {
                 <div className="flex w-full items-center gap-3 p-4 text-left">
                   <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
                   <span className="flex-1 text-sm font-medium">
-                    {section.title[language]}
+                    {displaySection.title[language]}
                   </span>
                   {!user ? (
                     <TelegramLoginButton size="text" />
@@ -83,12 +131,12 @@ export function GuidePage() {
                 </div>
               ) : (
                 <button
-                  onClick={() => setOpenSection(isOpen ? null : section.id)}
+                  onClick={() => setOpenSection(isOpen ? null : displaySection.id)}
                   className="flex w-full items-center gap-3 p-4 text-left"
                 >
                   <Icon className="h-5 w-5 shrink-0 text-primary" />
                   <span className="flex-1 text-sm font-medium">
-                    {section.title[language]}
+                    {displaySection.title[language]}
                   </span>
                   <span
                     className={cn(
@@ -103,7 +151,7 @@ export function GuidePage() {
               {isOpen && (
                 <div className="px-4 pb-4 animate-fade-in">
                   <ul className="space-y-2">
-                    {section.items.map((item, i) => (
+                    {displaySection.items.map((item, i) => (
                       <li
                         key={i}
                         className="flex gap-2 text-sm text-foreground/80"
@@ -115,10 +163,10 @@ export function GuidePage() {
                       </li>
                     ))}
                   </ul>
-                  {section.id === "diet" && (
-                    isPaid ? (
+                  {displaySection.id === "diet" && (
+                    isPaid && fastingGuideUrl ? (
                       <a
-                        href="https://fasting.himalayanholytemple.net"
+                        href={fastingGuideUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary hover:underline"

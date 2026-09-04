@@ -1,6 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
+const POLL_DELAY_MS = 2500;
+const POLL_START_DELAY_MS = 3000;
+const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+
 function generateToken(): string {
   const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
@@ -19,52 +23,124 @@ export function useTelegramLogin() {
   const { login } = useAuth();
   const [polling, setPolling] = useState(false);
   const [token, setToken] = useState(generateToken);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const expiryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+
+  const clearPollingResources = useCallback(() => {
+    for (const timeoutRef of [
+      pollTimeoutRef,
+      startTimeoutRef,
+      expiryTimeoutRef,
+    ]) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+    requestRef.current?.abort();
+    requestRef.current = null;
+  }, []);
 
   const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    clearPollingResources();
     setPolling(false);
+    setError(null);
     setToken(generateToken());
-  }, []);
+  }, [clearPollingResources]);
 
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
+    return clearPollingResources;
+  }, [clearPollingResources]);
 
   const onLinkClick = useCallback(() => {
+    clearPollingResources();
+    setError(null);
     setPolling(true);
+    const activeToken = token;
+    let consecutiveNetworkErrors = 0;
 
-    const startPolling = () => {
-      intervalRef.current = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/auth-poll?token=${token}`);
-          if (res.status === 200) {
-            const user = await res.json();
-            if (user && user.id) {
-              login(user);
-              stopPolling();
-            }
-          }
-          // 202 = pending, keep polling
-        } catch {
-          // Network error, keep trying
-        }
-      }, 2000);
+    const finishWithError = (message: string) => {
+      clearPollingResources();
+      setPolling(false);
+      setError(message);
+      setToken(generateToken());
     };
 
-    setTimeout(startPolling, 3000);
-    setTimeout(() => stopPolling(), 300000);
-  }, [token, login, stopPolling]);
+    const schedulePoll = (delay = POLL_DELAY_MS) => {
+      pollTimeoutRef.current = setTimeout(() => {
+        void poll();
+      }, delay);
+    };
+
+    const poll = async () => {
+      const controller = new AbortController();
+      requestRef.current = controller;
+      try {
+        const response = await fetch("/api/auth-poll", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token: activeToken }),
+          signal: controller.signal,
+        });
+        requestRef.current = null;
+
+        if (response.status === 200) {
+          const payload = (await response.json()) as { user?: unknown };
+          const user = payload.user as Parameters<typeof login>[0] | undefined;
+          if (user?.id) {
+            login(user);
+            clearPollingResources();
+            setPolling(false);
+            setToken(generateToken());
+            return;
+          }
+          finishWithError("invalid_response");
+          return;
+        }
+
+        if (response.status === 202) {
+          consecutiveNetworkErrors = 0;
+          schedulePoll();
+          return;
+        }
+
+        if (response.status === 429) {
+          schedulePoll(10_000);
+          return;
+        }
+
+        finishWithError("unavailable");
+      } catch (requestError) {
+        if (requestError instanceof DOMException && requestError.name === "AbortError") {
+          return;
+        }
+        requestRef.current = null;
+        consecutiveNetworkErrors += 1;
+        if (consecutiveNetworkErrors >= 3) setError("network");
+        schedulePoll(Math.min(10_000, POLL_DELAY_MS * consecutiveNetworkErrors));
+      }
+    };
+
+    startTimeoutRef.current = setTimeout(() => {
+      void poll();
+    }, POLL_START_DELAY_MS);
+    expiryTimeoutRef.current = setTimeout(() => {
+      finishWithError("timeout");
+    }, POLL_TIMEOUT_MS);
+  }, [token, login, clearPollingResources]);
 
   return {
     loginUrl: `https://t.me/himalayan_retreat_bot?start=login_${token}`,
     onLinkClick,
     polling,
+    error,
     cancel: stopPolling,
   };
 }

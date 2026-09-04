@@ -10,18 +10,17 @@ export function AuthCallbackPage() {
   const { login } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const invalidQuery = !searchParams.get("id") || !searchParams.get("hash");
+  const [error, setError] = useState<string | null>(() =>
+    invalidQuery ? t("Invalid auth link", "Неверная ссылка авторизации") : null,
+  );
 
   useEffect(() => {
+    if (invalidQuery) return;
     const data: Record<string, string> = {};
     searchParams.forEach((value, key) => {
       data[key] = value;
     });
-
-    if (!data.id || !data.hash) {
-      setError(t("Invalid auth link", "Неверная ссылка авторизации"));
-      return;
-    }
 
     // Convert id and auth_date to numbers for the API
     const payload = {
@@ -38,7 +37,7 @@ export function AuthCallbackPage() {
       .catch(() => {
         setError(t("Auth verification failed", "Ошибка верификации"));
       });
-  }, []);
+  }, [invalidQuery, login, navigate, searchParams, t]);
 
   if (error) {
     return (

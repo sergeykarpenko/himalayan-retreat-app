@@ -2,17 +2,26 @@ import { type ReactNode } from "react";
 import { Mountain } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { isNativeApp, isStandaloneApp } from "@/lib/platform";
+
+const DESKTOP_PUBLIC_PATHS = new Set([
+  "/privacy",
+  "/terms",
+  "/account",
+  "/auth/apple-complete",
+  "/auth/callback",
+]);
 
 export function DesktopGate({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const { t } = useLanguage();
 
-  const isStandalone =
-    typeof window !== "undefined" &&
-    (window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone);
+  const isStandalone = isStandaloneApp();
+  const isDesktopPublicPath = DESKTOP_PUBLIC_PATHS.has(
+    window.location.pathname.replace(/\/+$/, "") || "/",
+  );
 
-  if (isMobile || isStandalone) {
+  if (isMobile || isStandalone || isNativeApp() || isDesktopPublicPath) {
     return <>{children}</>;
   }
 

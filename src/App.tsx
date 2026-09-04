@@ -12,6 +12,12 @@ import { GuidePage } from "@/pages/GuidePage";
 import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { TestimonialsPage } from "@/pages/TestimonialsPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
+import { TermsPage } from "@/pages/TermsPage";
+import { AccountPage } from "@/pages/AccountPage";
+import { PrivacyConsent } from "@/components/shared/PrivacyConsent";
+import { AppleAuthCompletePage } from "@/pages/AppleAuthCompletePage";
+import { AuthCallbackPage } from "@/pages/AuthCallbackPage";
 
 function AnalyticsTracker() {
   useAnalytics();
@@ -26,6 +32,7 @@ function App() {
         <AuthProvider>
         <BrowserRouter>
           <AnalyticsTracker />
+          <PrivacyConsent />
           <Routes>
             <Route element={<AppShell />}>
               <Route path="/" element={<HomePage />} />
@@ -35,6 +42,11 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/testimonials" element={<TestimonialsPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/auth/apple-complete" element={<AppleAuthCompletePage />} />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

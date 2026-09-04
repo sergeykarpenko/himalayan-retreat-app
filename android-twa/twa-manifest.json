@@ -35,7 +35,11 @@
   "isMetaQuest": false,
   "minSdkVersion": 21,
   "orientation": "portrait",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "value": "FD:75:7B:FA:AE:13:95:B4:A4:BE:EB:88:C7:48:95:98:DA:E1:FC:10:86:E9:AF:59:9E:25:6A:0B:CD:FF:B5:7E"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "displayOverride": [],

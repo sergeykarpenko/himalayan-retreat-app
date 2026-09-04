@@ -8,7 +8,7 @@ interface Props {
 
 export function TelegramLoginButton({ size = "large" }: Props) {
   const { t } = useLanguage();
-  const { loginUrl, onLinkClick, polling, cancel } = useTelegramLogin();
+  const { loginUrl, onLinkClick, polling, error, cancel } = useTelegramLogin();
 
   // Inline text link for locked-content rows (e.g. schedule/guide accordions)
   if (size === "text") {
@@ -77,19 +77,34 @@ export function TelegramLoginButton({ size = "large" }: Props) {
   }
 
   return (
-    <a
-      href={loginUrl}
-      onClick={onLinkClick}
-      data-testid="telegram-login"
-      className={`
-        inline-flex items-center justify-center gap-2 rounded-full
-        bg-[#2AABEE] text-white font-medium
-        transition-opacity hover:opacity-90 active:opacity-80
-        ${isLarge ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"}
-      `}
-    >
-      <Send className={isLarge ? "h-5 w-5" : "h-4 w-4"} />
-      {t("Sign in with Telegram", "Войти через Telegram")}
-    </a>
+    <div className="flex flex-col items-center gap-2">
+      <a
+        href={loginUrl}
+        onClick={onLinkClick}
+        data-testid="telegram-login"
+        className={`
+          inline-flex items-center justify-center gap-2 rounded-full
+          bg-[#2AABEE] text-white font-medium
+          transition-opacity hover:opacity-90 active:opacity-80
+          ${isLarge ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"}
+        `}
+      >
+        <Send className={isLarge ? "h-5 w-5" : "h-4 w-4"} />
+        {t("Sign in with Telegram", "Войти через Telegram")}
+      </a>
+      {error && (
+        <p className="max-w-xs text-center text-xs text-destructive" role="alert">
+          {error === "timeout"
+            ? t(
+                "Login timed out. Please try again.",
+                "Время входа истекло. Попробуйте ещё раз.",
+              )
+            : t(
+                "Could not confirm the login. Check your connection and try again.",
+                "Не удалось подтвердить вход. Проверьте соединение и попробуйте снова.",
+              )}
+        </p>
+      )}
+    </div>
   );
 }

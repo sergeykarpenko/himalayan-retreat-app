@@ -1,0 +1,24 @@
+.boot-screen {
+  align-items: center;
+  background: #0a0a0b;
+  color: #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  gap: 18px;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+}
+
+.boot-mark {
+  color: #5792ff;
+  font-size: 52px;
+  line-height: 1;
+}
+
+.boot-title {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+}

@@ -1,68 +1,24 @@
-import { Headphones, Clock, Lock, Send, Play, Pause, Download, Check, Loader2, BookOpen } from "lucide-react";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { Headphones, Clock, Lock, Send, Play, Pause, ExternalLink, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackEvent } from "@/hooks/useAnalytics";
 import { meditations, attunements, books, type Track, type Book } from "@/data/meditations";
 import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
+import { BookContentGate } from "@/components/shared/BookContentGate";
+import { AppleLoginButton } from "@/components/shared/AppleLoginButton";
 
-const AUDIO_CACHE = "audio-cache";
-
-async function isTrackCached(url: string): Promise<boolean> {
-  try {
-    const cache = await caches.open(AUDIO_CACHE);
-    const resp = await cache.match(url);
-    return !!resp;
-  } catch {
-    return false;
-  }
-}
-
-async function cacheTrack(url: string, onProgress?: (pct: number) => void): Promise<void> {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error("Download failed");
-
-  const total = Number(resp.headers.get("content-length")) || 0;
-  const reader = resp.body?.getReader();
-  if (!reader) throw new Error("No stream");
-
-  const chunks: BlobPart[] = [];
-  let loaded = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    loaded += value.length;
-    if (total > 0 && onProgress) onProgress(Math.round((loaded / total) * 100));
-  }
-
-  const blob = new Blob(chunks, { type: "audio/mpeg" });
-  const cache = await caches.open(AUDIO_CACHE);
-  await cache.put(url, new Response(blob, {
-    headers: { "Content-Type": "audio/mpeg", "Content-Length": String(blob.size) },
-  }));
-}
-
-function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; language: "en" | "ru"; activeTrackId: string | null; onPlay: (id: string) => void }) {
-  const [playing, setPlaying] = useState(false);
-  const [cached, setCached] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [progress, setProgress] = useState(0);
+function AudioTrack({ track, language, activeTrackId, onPlay, onStop }: { track: Track; language: "en" | "ru"; activeTrackId: string | null; onPlay: (id: string) => void; onStop: () => void }) {
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    if (track.audioUrl) {
-      isTrackCached(track.audioUrl).then(setCached);
-    }
-  }, [track.audioUrl]);
+  const playing = activeTrackId === track.id;
 
   // Pause when another track becomes active
   useEffect(() => {
-    if (activeTrackId !== track.id && playing) {
+    if (activeTrackId !== track.id) {
       audioRef.current?.pause();
-      setPlaying(false);
     }
-  }, [activeTrackId, track.id, playing]);
+  }, [activeTrackId, track.id]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -71,33 +27,31 @@ function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; 
     };
   }, []);
 
-  const handleDownload = useCallback(async () => {
-    if (!track.audioUrl || cached || downloading) return;
-    setDownloading(true);
-    setProgress(0);
-    try {
-      await cacheTrack(track.audioUrl, setProgress);
-      setCached(true);
-    } catch {
-      // download failed silently
-    } finally {
-      setDownloading(false);
-    }
-  }, [track.audioUrl, cached, downloading]);
-
-  const toggle = () => {
+  const toggle = async () => {
+    setError(null);
     if (!audioRef.current) {
       audioRef.current = new Audio(track.audioUrl);
-      audioRef.current.onended = () => setPlaying(false);
+      audioRef.current.onended = onStop;
     }
     if (playing) {
       audioRef.current.pause();
-      setPlaying(false);
+      onStop();
     } else {
       onPlay(track.id);
-      audioRef.current.play();
-      setPlaying(true);
-      trackEvent("audio_play", { track_id: track.id, track_title: track.title.ru || track.title.en });
+      try {
+        await audioRef.current.play();
+        trackEvent("audio_play", {
+          track_id: track.id,
+          track_title: track.title.ru || track.title.en,
+        });
+      } catch {
+        onStop();
+        setError(
+          language === "ru"
+            ? "Не удалось воспроизвести"
+            : "Playback failed",
+        );
+      }
     }
   };
 
@@ -117,93 +71,33 @@ function AudioTrack({ track, language, activeTrackId, onPlay }: { track: Track; 
         <p className="text-sm font-medium truncate">
           {track.title[language]}
         </p>
-        <p className="text-xs text-muted-foreground truncate">
-          {track.category[language]}
-        </p>
+        {error ? (
+          <p className="text-xs text-destructive truncate" role="alert">
+            {error}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground truncate">
+            {track.category[language]}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-2 text-muted-foreground">
         <Clock className="h-3 w-3" />
         <span className="text-xs font-mono">{track.duration}</span>
-        {cached ? (
-          <Check className="h-4 w-4 ml-1 text-green-500" />
-        ) : downloading ? (
-          <div className="relative ml-1">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {progress > 0 && (
-              <span className="absolute -top-3 -right-1 text-[9px] font-mono">{progress}%</span>
-            )}
-          </div>
-        ) : (
-          <button onClick={handleDownload} className="ml-1 p-0.5 rounded hover:bg-primary/10 transition-colors" title="Download for offline">
-            <Download className="h-4 w-4" />
-          </button>
-        )}
       </div>
     </div>
   );
 }
 
 function DownloadAllButton({ tracks, language }: { tracks: Track[]; language: "en" | "ru" }) {
-  const [allCached, setAllCached] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [done, setDone] = useState(0);
-
-  useEffect(() => {
-    Promise.all(tracks.map((t) => t.audioUrl ? isTrackCached(t.audioUrl) : Promise.resolve(true)))
-      .then((results) => setAllCached(results.every(Boolean)));
-  }, [tracks]);
-
-  const handleDownloadAll = async () => {
-    if (allCached || downloading) return;
-    setDownloading(true);
-    setDone(0);
-    for (const track of tracks) {
-      if (!track.audioUrl) continue;
-      const isCached = await isTrackCached(track.audioUrl);
-      if (!isCached) {
-        try {
-          await cacheTrack(track.audioUrl);
-        } catch {
-          // skip failed
-        }
-      }
-      setDone((d) => d + 1);
-    }
-    setAllCached(true);
-    setDownloading(false);
-  };
-
-  if (allCached) {
-    return (
-      <span className="flex items-center gap-1 text-xs text-green-500">
-        <Check className="h-3.5 w-3.5" />
-        {language === "ru" ? "Офлайн" : "Offline"}
-      </span>
-    );
-  }
-
-  return (
-    <button
-      onClick={handleDownloadAll}
-      disabled={downloading}
-      className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
-    >
-      {downloading ? (
-        <>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {done}/{tracks.length}
-        </>
-      ) : (
-        <>
-          <Download className="h-3.5 w-3.5" />
-          {language === "ru" ? "Скачать все" : "Download all"}
-        </>
-      )}
-    </button>
-  );
+  void tracks;
+  void language;
+  return null;
 }
 
 const FREE_TRACKS = 2;
+const FREE_ATTUNEMENTS = attunements.slice(0, FREE_TRACKS);
+const PAID_ATTUNEMENTS = attunements.slice(FREE_TRACKS);
 
 function LockedTrack({ track, language }: { track: Track; language: "en" | "ru" }) {
   return (
@@ -230,6 +124,8 @@ function LockedTrack({ track, language }: { track: Track; language: "en" | "ru" 
 export function MeditationsPage() {
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
+  const [bookToOpen, setBookToOpen] = useState<Book | null>(null);
   const isPaid = user?.paid === true;
 
   if (!user) {
@@ -260,19 +156,48 @@ export function MeditationsPage() {
               </p>
             </div>
             <div className="flex justify-center">
-              <TelegramLoginButton size="large" />
+              <div className="flex w-full flex-col items-center gap-3">
+                <TelegramLoginButton size="large" />
+                {import.meta.env.VITE_APPLE_SIGN_IN_ENABLED === "true" && (
+                  <>
+                    <div className="flex w-full max-w-xs items-center gap-3 text-xs text-muted-foreground">
+                      <span className="h-px flex-1 bg-border" />
+                      {t("or", "или")}
+                      <span className="h-px flex-1 bg-border" />
+                    </div>
+                    <AppleLoginButton />
+                  </>
+                )}
+              </div>
             </div>
+            <a
+              href="https://t.me/himalayan_retreat_bot?start=book"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-auto inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm text-primary"
+            >
+              <BookOpen className="h-4 w-4" />
+              {t("Get books in Telegram", "Получить книги в Telegram")}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
           </div>
         </div>
       </div>
     );
   }
 
-  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
+  const availableTracks = isPaid ? attunements : FREE_ATTUNEMENTS;
 
-  const freeTracks = attunements.slice(0, FREE_TRACKS);
-  const paidTracks = attunements.slice(FREE_TRACKS);
-  const availableTracks = isPaid ? attunements : freeTracks;
+  const confirmBookOpen = () => {
+    if (!bookToOpen?.downloadUrl) return;
+    trackEvent("book_bot_open", {
+      file_name: bookToOpen.id,
+      link_url: bookToOpen.downloadUrl,
+      content_type: "book",
+    });
+    window.open(bookToOpen.downloadUrl, "_blank", "noopener,noreferrer");
+    setBookToOpen(null);
+  };
 
   return (
     <div className="animate-fade-in">
@@ -293,14 +218,14 @@ export function MeditationsPage() {
       </div>
 
       <div className="px-4 pb-4 space-y-3">
-        {freeTracks.map((track) => (
-          <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} />
+        {FREE_ATTUNEMENTS.map((track) => (
+          <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} onStop={() => setActiveTrackId(null)} />
         ))}
         {isPaid
-          ? paidTracks.map((track) => (
-              <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} />
+          ? PAID_ATTUNEMENTS.map((track) => (
+              <AudioTrack key={track.id} track={track} language={language} activeTrackId={activeTrackId} onPlay={setActiveTrackId} onStop={() => setActiveTrackId(null)} />
             ))
-          : paidTracks.map((track) => (
+          : PAID_ATTUNEMENTS.map((track) => (
               <LockedTrack key={track.id} track={track} language={language} />
             ))}
       </div>
@@ -352,29 +277,31 @@ export function MeditationsPage() {
         <p className="text-sm text-muted-foreground mb-3">
           {t("Books by our teachers", "Книги наших учителей")}
         </p>
+        <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-amber-500">18+ · </span>
+          {t(
+            "Some materials discuss suicide, mental health, altered states and psychoactive substances. They are not medical advice.",
+            "Некоторые материалы обсуждают суицид, психическое здоровье, изменённые состояния и психоактивные вещества. Они не являются медицинской рекомендацией.",
+          )}
+        </div>
+        <p className="mb-3 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          {t("Books are delivered securely in our Telegram bot.", "Книги выдаются в нашем Telegram-боте.")}
+          <ExternalLink className="h-3.5 w-3.5" />
+        </p>
       </div>
 
       <div className="px-4 pb-8 space-y-3">
         {books.map((book) => {
-          const canDownload = user && book.available;
+          const canDownload = Boolean(user && book.available);
           const isComingSoon = !book.available;
 
-          const Wrapper = canDownload ? "a" : "div";
-          const wrapperProps = canDownload
-            ? { href: book.downloadUrl!, download: true, target: "_blank", rel: "noopener noreferrer" }
-            : {};
-
           return (
-            <Wrapper
+            <button
+              type="button"
               key={book.id}
-              {...(wrapperProps as any)}
-              onClick={canDownload ? () => trackEvent("file_download", {
-                file_name: book.id,
-                file_extension: "pdf",
-                link_url: book.downloadUrl,
-                content_type: "book",
-              }) : undefined}
-              className={`flex items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
+              disabled={!canDownload}
+              onClick={() => canDownload && setBookToOpen(book)}
+              className={`flex w-full items-center gap-3 rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4 text-left transition-colors ${isComingSoon ? "opacity-50" : ""} ${canDownload ? "active:bg-primary/5" : ""}`}
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <BookOpen className="h-5 w-5 text-primary" />
@@ -393,15 +320,21 @@ export function MeditationsPage() {
                     {t("Soon", "Скоро")}
                   </span>
                 ) : canDownload ? (
-                  <Download className="h-4 w-4 text-primary" />
+                  <ExternalLink className="h-4 w-4 text-primary" />
                 ) : (
                   <Lock className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
-            </Wrapper>
+            </button>
           );
         })}
       </div>
+      <BookContentGate
+        language={language}
+        open={bookToOpen !== null}
+        onCancel={() => setBookToOpen(null)}
+        onConfirm={confirmBookOpen}
+      />
     </div>
   );
 }

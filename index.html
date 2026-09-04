@@ -11,6 +11,8 @@
     <meta name="apple-mobile-web-app-title" content="Retreat" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#0A0A0B" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="stylesheet" href="/boot.css" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -28,39 +30,15 @@
     <meta name="twitter:description" content="Your guide to the Himalayan retreat experience" />
     <meta name="twitter:image" content="https://app.himalayanholytemple.net/og-image.jpg" />
 
-    <!-- Analytics: deferred to not block LCP -->
-    <script>
-    window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
-    window.addEventListener('load',function(){
-      var s=document.createElement('script');s.src='https://www.googletagmanager.com/gtag/js?id=G-S7KVX0LNYJ';document.head.appendChild(s);
-      gtag('js',new Date());gtag('config','G-S7KVX0LNYJ');
-      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1316009400285652');fbq('track','PageView');
-      (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","viaq0ovw0l");
-    });
-    </script>
   </head>
   <body>
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1316009400285652&ev=PageView&noscript=1"/></noscript>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-screen" aria-label="Himalayan Retreat">
+        <div class="boot-mark" aria-hidden="true">△</div>
+        <div class="boot-title">HIMALAYAN RETREAT</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Recovery: if app doesn't render in 5s, clear SW caches and reload
-      setTimeout(function() {
-        var root = document.getElementById("root");
-        if (root && root.children.length === 0 && "caches" in window) {
-          navigator.serviceWorker.getRegistrations().then(function(regs) {
-            regs.forEach(function(r) { r.unregister(); });
-          });
-          caches.keys().then(function(names) {
-            Promise.all(names.map(function(n) { return caches.delete(n); })).then(function() {
-              if (!sessionStorage.getItem("sw-fix")) {
-                sessionStorage.setItem("sw-fix", "1");
-                window.location.reload();
-              }
-            });
-          });
-        }
-      }, 5000);
-    </script>
+    <script src="/app-recovery.js" defer></script>
   </body>
 </html>

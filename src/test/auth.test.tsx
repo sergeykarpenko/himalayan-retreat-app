@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
@@ -111,10 +111,25 @@ describe("MeditationsPage gating", () => {
     expect(screen.getAllByText("Available for retreat participants").length).toBeGreaterThan(0);
   });
 
-  test("shows all tracks for paid user", () => {
+  test("does not trust a paid flag injected into localStorage", () => {
     localStorage.setItem("tg_user", JSON.stringify({ ...mockUser, paid: true }));
     renderWithProviders(<MeditationsPage />);
-    expect(screen.queryByText("Available for retreat participants")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Available for retreat participants")).toHaveLength(4);
+  });
+
+  test("shows all tracks only after the server confirms paid access", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ user: { ...mockUser, paid: true } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    renderWithProviders(<MeditationsPage />);
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Available for retreat participants"),
+      ).not.toBeInTheDocument();
+    });
   });
 });
 

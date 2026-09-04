@@ -1,4 +1,12 @@
-interface Env {
+import { json } from "../_lib/http";
+import { readJsonWithLimit, requestBodyError } from "../_lib/request";
+import {
+  createSessionCookie,
+  type SessionEnv,
+  type SessionUser,
+} from "../_lib/session";
+
+interface Env extends SessionEnv {
   TELEGRAM_BOT_TOKEN: string;
 }
 
@@ -16,36 +24,37 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   if (!env.TELEGRAM_BOT_TOKEN) {
-    return new Response(JSON.stringify({ error: "Server misconfigured" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return json({ error: "server_misconfigured" }, { status: 500 });
   }
 
   let data: TelegramAuthData;
   try {
-    data = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    data = await readJsonWithLimit<TelegramAuthData>(request, 4096);
+  } catch (error) {
+    return requestBodyError(error) ?? json({ error: "invalid_json" }, { status: 400 });
   }
 
-  if (!data.id || !data.first_name || !data.auth_date || !data.hash) {
-    return new Response(JSON.stringify({ error: "Missing required fields" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+  const allowedFields = new Set([
+    "id", "first_name", "last_name", "username", "photo_url", "auth_date", "hash",
+  ]);
+  if (
+    !data || typeof data !== "object" ||
+    Object.keys(data).some((field) => !allowedFields.has(field)) ||
+    !Number.isSafeInteger(data.id) || data.id <= 0 ||
+    typeof data.first_name !== "string" || data.first_name.length < 1 || data.first_name.length > 128 ||
+    !Number.isSafeInteger(data.auth_date) ||
+    typeof data.hash !== "string" ||
+    (data.last_name !== undefined && (typeof data.last_name !== "string" || data.last_name.length > 128)) ||
+    (data.username !== undefined && (typeof data.username !== "string" || data.username.length > 64)) ||
+    (data.photo_url !== undefined && (typeof data.photo_url !== "string" || data.photo_url.length > 512))
+  ) {
+    return json({ error: "missing_required_fields" }, { status: 400 });
   }
 
   // Check auth_date is not older than 24 hours
   const now = Math.floor(Date.now() / 1000);
-  if (now - data.auth_date > 86400) {
-    return new Response(JSON.stringify({ error: "Auth data expired" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (now - data.auth_date > 86400 || data.auth_date > now + 300) {
+    return json({ error: "auth_data_expired" }, { status: 401 });
   }
 
   // HMAC-SHA256 verification
@@ -79,29 +88,39 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   );
 
   // 4. Compare with provided hash
-  const computedHash = Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (computedHash !== hash) {
-    return new Response(JSON.stringify({ error: "Invalid hash" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  const computedHash = new Uint8Array(signature);
+  const suppliedHash =
+    /^[a-f0-9]{64}$/u.test(hash)
+      ? Uint8Array.from(
+          hash.match(/.{2}/gu) ?? [],
+          (byte) => Number.parseInt(byte, 16),
+        )
+      : new Uint8Array();
+  let mismatch = computedHash.length ^ suppliedHash.length;
+  for (let index = 0; index < computedHash.length; index += 1) {
+    mismatch |= computedHash[index] ^ (suppliedHash[index] ?? 0);
+  }
+  if (mismatch !== 0) {
+    return json({ error: "invalid_hash" }, { status: 401 });
   }
 
   // Verified — return user without hash
-  const user = {
+  const user: SessionUser = {
     id: data.id,
     first_name: data.first_name,
     last_name: data.last_name,
     username: data.username,
     photo_url: data.photo_url,
     auth_date: data.auth_date,
+    paid: false,
+    provider: "telegram",
+    provider_user_id: String(data.id),
   };
 
-  return new Response(JSON.stringify({ user }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  try {
+    const cookie = await createSessionCookie(user, env.SESSION_SECRET);
+    return json({ user }, { headers: { "Set-Cookie": cookie } });
+  } catch {
+    return json({ error: "server_misconfigured" }, { status: 500 });
+  }
 };

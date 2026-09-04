@@ -1,11 +1,11 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "next-themes";
-import { Moon, Sun, LogOut, Send } from "lucide-react";
+import { Moon, Sun, LogOut } from "lucide-react";
 import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
 
 export function Header() {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
 

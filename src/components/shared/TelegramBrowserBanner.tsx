@@ -1,10 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Globe, X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { isNativeApp } from "@/lib/platform";
+import { isNativeApp, isStandaloneApp } from "@/lib/platform";
+
+interface TelegramWindow extends Window {
+  TelegramWebviewProxy?: unknown;
+  Telegram?: { WebApp?: unknown };
+}
 
 function isTelegramBrowser(): boolean {
-  const w = window as any;
+  const w = window as TelegramWindow;
   // Telegram WebView injects these objects
   if (w.TelegramWebviewProxy || w.Telegram?.WebApp) return true;
   // Fallback: iOS WebView has "Mobile" but no "Safari" in UA
@@ -17,17 +22,13 @@ function isTelegramBrowser(): boolean {
 
 export function TelegramBrowserBanner() {
   const { t } = useLanguage();
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone;
-    const dismissed = sessionStorage.getItem("tg-browser-dismissed");
-    if (!isStandalone && !dismissed && !isNativeApp() && isTelegramBrowser()) {
-      setShow(true);
-    }
-  }, []);
+  const [show, setShow] = useState(
+    () =>
+      !isStandaloneApp() &&
+      !sessionStorage.getItem("tg-browser-dismissed") &&
+      !isNativeApp() &&
+      isTelegramBrowser(),
+  );
 
   if (!show) return null;
 

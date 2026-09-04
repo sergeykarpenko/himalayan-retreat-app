@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DoorOpen,
   MapPin,
@@ -7,15 +7,21 @@ import {
   Mountain,
   Sun,
   Lock,
+  type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTelegramLogin } from "@/hooks/useTelegramLogin";
-import { TelegramLoginButton } from "@/components/shared/TelegramLoginButton";
-import { schedule } from "@/data/schedule";
 import { cn } from "@/lib/utils";
 
-const iconMap: Record<string, any> = {
+interface DaySchedule {
+  date: { en: string; ru: string };
+  title: { en: string; ru: string };
+  description: { en: string; ru: string };
+  icon: string;
+}
+
+const iconMap: Record<string, LucideIcon> = {
   "door-open": DoorOpen,
   "map-pin": MapPin,
   leaf: Leaf,
@@ -26,9 +32,29 @@ const iconMap: Record<string, any> = {
 
 export function SchedulePage() {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { loginUrl, onLinkClick } = useTelegramLogin();
   const [openDay, setOpenDay] = useState<number | null>(0);
+  const [schedule, setSchedule] = useState<DaySchedule[]>([]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    const controller = new AbortController();
+    fetch("/api/schedule", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("schedule_unavailable");
+        return response.json() as Promise<{ days?: DaySchedule[] }>;
+      })
+      .then((payload) => setSchedule(payload.days ?? []))
+      .catch(() => {
+        if (!controller.signal.aborted) setSchedule([]);
+      });
+    return () => controller.abort();
+  }, [authLoading, user?.id]);
 
   return (
     <div className="animate-fade-in">
@@ -55,31 +81,15 @@ export function SchedulePage() {
       <div className="px-4 pb-8 space-y-2">
         {schedule.map((day, i) => {
           const Icon = iconMap[day.icon] || Sparkles;
-          const locked = i > 0 && !user;
-          const isOpen = !locked && openDay === i;
+          const isOpen = openDay === i;
 
           return (
             <div
               key={day.date.en}
               className={cn(
                 "rounded-2xl border border-border bg-card/55 backdrop-blur-md overflow-hidden",
-                locked && "opacity-50"
               )}
             >
-              {locked ? (
-                <div className="flex w-full items-center gap-3 p-4 text-left">
-                  <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
-                  <div className="flex-1">
-                    <span className="block text-xs font-mono text-muted-foreground">
-                      {day.date[language]}
-                    </span>
-                    <span className="text-sm font-medium">
-                      {day.title[language]}
-                    </span>
-                  </div>
-                  <TelegramLoginButton size="text" />
-                </div>
-              ) : (
                 <button
                   onClick={() => setOpenDay(isOpen ? null : i)}
                   className="flex w-full items-center gap-3 p-4 text-left"
@@ -102,7 +112,6 @@ export function SchedulePage() {
                     &#9662;
                   </span>
                 </button>
-              )}
               {isOpen && (
                 <div className="px-4 pb-4 animate-fade-in">
                   <p className="text-sm text-foreground/80 leading-relaxed">

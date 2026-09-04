@@ -1,4 +1,4 @@
-import { screen, cleanup } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
@@ -17,6 +17,34 @@ import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { TestimonialsPage } from "@/pages/TestimonialsPage";
 import { Header } from "@/components/layout/Header";
+
+function mockAuthenticatedSession(paid = false) {
+  vi.mocked(fetch).mockImplementation((input) => {
+    const url = String(input);
+    const headers = { "Content-Type": "application/json" };
+    if (url.includes("/api/guide")) {
+      const sections = paid ? guideSections : guideSections.slice(0, 3);
+      return Promise.resolve(new Response(JSON.stringify({ sections }), { status: 200, headers }));
+    }
+    if (url.includes("/api/schedule")) {
+      return Promise.resolve(new Response(JSON.stringify({ days: schedule }), { status: 200, headers }));
+    }
+    return Promise.resolve(new Response(
+      JSON.stringify({
+        user: {
+          id: 1,
+          first_name: "Test",
+          auth_date: Math.floor(Date.now() / 1000),
+          paid,
+        },
+      }),
+      {
+        status: 200,
+        headers,
+      },
+    ));
+  });
+}
 
 // ── Data integrity ──────────────────────────────────────────────
 
@@ -98,19 +126,18 @@ describe("Page rendering - EN", () => {
     expect(links).toHaveLength(9);
   });
 
-  test("SchedulePage: Day 1 open by default", () => {
+  test("SchedulePage: Day 1 open by default", async () => {
     renderWithProviders(<SchedulePage />);
-    expect(screen.getByText("Arrival in Kathmandu")).toBeInTheDocument();
+    expect(await screen.findByText("Arrival in Kathmandu")).toBeInTheDocument();
     expect(
       screen.getByText(/Individual transfer and hotel check-in in Kathmandu/)
     ).toBeInTheDocument();
   });
 
-  test("SchedulePage: shows all 10 days by date", () => {
+  test("SchedulePage: guest receives only the public first day", async () => {
     renderWithProviders(<SchedulePage />);
-    for (const day of schedule) {
-      expect(screen.getByText(day.date.en)).toBeInTheDocument();
-    }
+    expect(await screen.findByText(schedule[0].date.en)).toBeInTheDocument();
+    expect(screen.queryByText(schedule[1].date.en)).not.toBeInTheDocument();
   });
 
   test("MeditationsPage: all tracks rendered (logged in)", () => {
@@ -174,9 +201,9 @@ describe("Page rendering - RU", () => {
     expect(screen.getByText("Гималайский Ретрит")).toBeInTheDocument();
   });
 
-  test("SchedulePage: Russian day titles", () => {
+  test("SchedulePage: Russian day titles", async () => {
     renderWithProviders(<SchedulePage />);
-    expect(screen.getByText("Прилёт в Катманду")).toBeInTheDocument();
+    expect(await screen.findByText("Прилёт в Катманду")).toBeInTheDocument();
   });
 
   test("AboutPage: Russian teacher names", () => {
@@ -229,19 +256,18 @@ describe("Schedule accordion", () => {
   });
   afterEach(() => localStorage.removeItem("tg_user"));
 
-  test("guest: only day 1 is unlocked, rest show sign-in", () => {
+  test("guest: API response contains only day 1", async () => {
     localStorage.removeItem("tg_user");
     renderWithProviders(<SchedulePage />);
-    const signInLabels = screen.getAllByText("Sign in");
-    expect(signInLabels).toHaveLength(schedule.length - 1);
+    expect(await screen.findByText(schedule[0].date.en)).toBeInTheDocument();
+    expect(screen.queryByText(schedule[1].date.en)).not.toBeInTheDocument();
   });
 
   test("logged-in: click day 4 opens First Ceremony, closes day 1", async () => {
+    mockAuthenticatedSession();
     const user = userEvent.setup();
     renderWithProviders(<SchedulePage />);
-    expect(
-      screen.getByText(/Individual transfer and hotel check-in in Kathmandu/)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Individual transfer and hotel check-in in Kathmandu/)).toBeInTheDocument();
 
     await user.click(screen.getByText("First Ceremony — Full Moon"));
 
@@ -260,10 +286,10 @@ describe("Guide accordion", () => {
   beforeEach(() => localStorage.removeItem("language"));
   afterEach(() => localStorage.removeItem("tg_user"));
 
-  test("packing open by default with items visible", () => {
+  test("packing open by default with items visible", async () => {
     renderWithProviders(<GuidePage />);
     expect(
-      screen.getByText("Comfortable loose clothing for meditation and yoga")
+      await screen.findByText("Comfortable loose clothing for meditation and yoga")
     ).toBeInTheDocument();
   });
 
@@ -276,12 +302,11 @@ describe("Guide accordion", () => {
   });
 
   test("logged-in: click diet -> diet opens, packing closes", async () => {
+    mockAuthenticatedSession();
     localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
     const user = userEvent.setup();
     renderWithProviders(<GuidePage />);
-    expect(
-      screen.getByText("Comfortable loose clothing for meditation and yoga")
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Comfortable loose clothing for meditation and yoga")).toBeInTheDocument();
 
     await user.click(screen.getByText("Diet & Nutrition"));
 
@@ -298,13 +323,21 @@ describe("Guide accordion", () => {
 // ── Audio playback ──────────────────────────────────────────────
 
 describe("Audio playback", () => {
-  let mockAudios: Array<{ play: ReturnType<typeof vi.fn>; pause: ReturnType<typeof vi.fn>; paused: boolean; onended: (() => void) | null; src: string }>;
+  interface MockAudioInstance {
+    play: ReturnType<typeof vi.fn>;
+    pause: ReturnType<typeof vi.fn>;
+    paused: boolean;
+    onended: (() => void) | null;
+    src: string;
+  }
+
+  let mockAudios: MockAudioInstance[];
   let originalAudio: typeof Audio;
 
   beforeEach(() => {
     mockAudios = [];
     originalAudio = globalThis.Audio;
-    globalThis.Audio = function MockAudio(this: any, src?: string) {
+    globalThis.Audio = function MockAudio(this: MockAudioInstance, src?: string) {
       this.play = vi.fn().mockResolvedValue(undefined);
       this.pause = vi.fn();
       this.paused = true;
@@ -315,9 +348,17 @@ describe("Audio playback", () => {
     } as unknown as typeof Audio;
     // Stub caches API to avoid errors
     if (!globalThis.caches) {
-      (globalThis as any).caches = { open: vi.fn().mockResolvedValue({ match: vi.fn().mockResolvedValue(null) }) };
+      Object.defineProperty(globalThis, "caches", {
+        configurable: true,
+        value: {
+          open: vi.fn().mockResolvedValue({
+            match: vi.fn().mockResolvedValue(null),
+          }),
+        } as unknown as CacheStorage,
+      });
     }
     localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
+    mockAuthenticatedSession();
   });
 
   afterEach(() => {
@@ -328,11 +369,6 @@ describe("Audio playback", () => {
   test("only one track plays at a time", async () => {
     const user = userEvent.setup();
     renderWithProviders(<MeditationsPage />);
-
-    // attunements have audioUrl, so they render play buttons
-    const playButtons = screen.getAllByRole("button").filter(
-      (btn) => btn.querySelector(".lucide-play") || btn.querySelector("[class*='play']")
-    );
 
     // Click first play button (track A)
     const firstTrackTitle = attunements[0].title.en;

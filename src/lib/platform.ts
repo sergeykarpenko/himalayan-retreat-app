@@ -1,6 +1,29 @@
-// True when running inside the native Capacitor app shell (iOS/Android store build),
-// as opposed to a browser tab or installed PWA. Capacitor injects window.Capacitor
-// at runtime in the wrapped build; it's simply absent on the plain web deployment.
+interface CapacitorBridge {
+  isNativePlatform?: () => boolean;
+  getPlatform?: () => string;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
+declare global {
+  interface Window {
+    Capacitor?: CapacitorBridge;
+  }
+}
+
 export function isNativeApp(): boolean {
-  return (window as any).Capacitor?.isNativePlatform?.() === true;
+  return window.Capacitor?.isNativePlatform?.() === true;
+}
+
+export function nativePlatform(): string | null {
+  return isNativeApp() ? window.Capacitor?.getPlatform?.() ?? null : null;
+}
+
+export function isStandaloneApp(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as NavigatorWithStandalone).standalone === true
+  );
 }

@@ -1,5 +1,3 @@
-const AUDIO_BASE = "https://bot-api.himalayanholytemple.net/audio";
-
 export interface Book {
   id: string;
   title: { en: string; ru: string };
@@ -80,7 +78,7 @@ export const attunements: Track[] = [
     },
     duration: "9:52",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/calm-and-confidence.mp3`,
+    audioUrl: "/api/audio/calm-confidence",
   },
   {
     id: "deep-immersion",
@@ -91,7 +89,7 @@ export const attunements: Track[] = [
     },
     duration: "25:12",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/deep-immersion.mp3`,
+    audioUrl: "/api/audio/deep-immersion",
   },
   {
     id: "full-relaxation",
@@ -102,7 +100,7 @@ export const attunements: Track[] = [
     },
     duration: "12:04",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/full-relaxation.mp3`,
+    audioUrl: "/api/audio/full-relaxation",
   },
   {
     id: "abundance",
@@ -113,7 +111,7 @@ export const attunements: Track[] = [
     },
     duration: "14:46",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/abundance-flow.mp3`,
+    audioUrl: "/api/audio/abundance",
   },
   {
     id: "soul",
@@ -124,7 +122,7 @@ export const attunements: Track[] = [
     },
     duration: "14:46",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/soul-attunement.mp3`,
+    audioUrl: "/api/audio/soul",
   },
   {
     id: "negativity-release",
@@ -135,7 +133,7 @@ export const attunements: Track[] = [
     },
     duration: "14:46",
     category: { en: "Attunement", ru: "Сонастройка" },
-    audioUrl: `${AUDIO_BASE}/negativity-release.mp3`,
+    audioUrl: "/api/audio/negativity-release",
   },
 ];
 
@@ -144,7 +142,7 @@ export const books: Book[] = [
     id: "fenomen-suicida",
     title: { en: "The Phenomenon of Suicide", ru: "Феномен суицида" },
     author: { en: "Olena Ruta, Pavel Dmitriev", ru: "Елена Рута, Павел Дмитриев" },
-    downloadUrl: "/books/fenomen-suicida.pdf",
+    downloadUrl: "https://t.me/himalayan_retreat_bot?start=book",
     available: true,
   },
   {
