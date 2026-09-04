@@ -3,9 +3,9 @@
 Every required item must be evidenced before public submission. Do not mark
 console- or device-only items complete from a source-code build.
 
-Latest production evidence: [smoke test 2026-09-04](SMOKE_TEST_2026-09-04.md)
-— **FAIL / NO-GO** because the public PDF and old service worker remain live
-and the new protected APIs are not deployed.
+Latest production evidence: [smoke test 2026-09-05](SMOKE_TEST_2026-09-05.md)
+— anonymous/public scenarios pass after deployment `cea37c3`. Authenticated,
+paid and Telegram bot subscription scenarios remain pending.
 
 ## P0 backend and security
 
@@ -18,15 +18,17 @@ and the new protected APIs are not deployed.
       enforces subscription to both required channels before delivery.
 - [ ] Account deletion backend accepts and completes both provider types.
 - [ ] Auth polling and deletion endpoints have Cloudflare rate-limit rules.
-- [ ] `/books/fenomen-suicida.pdf` returns 404 and no book file is included in
+- [x] `/books/fenomen-suicida.pdf` returns 404 and no book file is included in
       web, iOS, or Android application assets.
-- [ ] Guest `/api/guide` and `/api/schedule` responses contain no protected
-      sections; paid and unpaid responses match the access matrix.
+- [x] Guest `/api/guide` and `/api/schedule` responses contain no protected
+      sections.
+- [ ] Paid and unpaid `/api/guide` and `/api/schedule` responses match the
+      access matrix.
 - [ ] Production JS bundles contain no protected guide/schedule text or private
       origin URLs (`npm run audit:bundle`).
 - [ ] A paid audio request is rejected after logout/session expiry even if an
       older release previously populated `audio-cache`.
-- [ ] Production CSP/HSTS headers match `public/_headers`.
+- [x] Production CSP/HSTS headers match `public/_headers`.
 - [ ] `npm run check` and `npm run build:functions` pass from a clean clone.
 
 ## Content and privacy
