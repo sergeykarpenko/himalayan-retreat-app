@@ -5,6 +5,11 @@ export interface DaySchedule {
   icon: string;
 }
 
+export const retreatDates = {
+  en: "September 23 — October 1, 2026",
+  ru: "23 сентября — 1 октября 2026",
+};
+
 export const schedule: DaySchedule[] = [
   {
     date: { en: "Sep 23", ru: "23 сентября" },

@@ -14,6 +14,7 @@ import { InstallBanner } from "@/components/shared/InstallBanner";
 import { TelegramBrowserBanner } from "@/components/shared/TelegramBrowserBanner";
 import { SignInBanner } from "@/components/shared/SignInBanner";
 import { getDaysUntilRetreat, pluralizeRuDays } from "@/lib/retreatCountdown";
+import { retreatDates } from "@/data/schedule";
 
 const quickLinks = [
   {
@@ -86,7 +87,7 @@ export function HomePage() {
             {t("Next retreat", "Следующий ретрит")}
           </p>
           <p className="text-base font-medium">
-            {t("September 23 — October 2, 2026", "23 сентября — 2 октября 2026")}
+            {retreatDates[language]}
           </p>
           {daysLeft > 0 && (
             <p className="text-xs text-muted-foreground/70 mt-0.5">

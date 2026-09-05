@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
-import { schedule } from "@/data/schedule";
+import { retreatDates, schedule } from "@/data/schedule";
 import { teachers } from "@/data/about";
 import { guideSections } from "@/data/guide";
 import { meditations, attunements } from "@/data/meditations";
@@ -52,6 +52,10 @@ describe("Data integrity", () => {
   test("schedule has 9 days and departs on Oct 1", () => {
     expect(schedule).toHaveLength(9);
     expect(schedule.at(-1)?.date).toEqual({ en: "Oct 1", ru: "1 октября" });
+    expect(retreatDates).toEqual({
+      en: "September 23 — October 1, 2026",
+      ru: "23 сентября — 1 октября 2026",
+    });
   });
 
   test("schedule places the valley flight on Sep 25 and excludes honey hunting", () => {
@@ -135,6 +139,7 @@ describe("Page rendering - EN", () => {
   test("HomePage: heading + 6 quick links + booking CTA + install banner + sign-in link", () => {
     renderWithProviders(<HomePage />);
     expect(screen.getByText("Himalayan Retreat")).toBeInTheDocument();
+    expect(screen.getByText(retreatDates.en)).toBeInTheDocument();
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(9);
   });
@@ -169,7 +174,7 @@ describe("Page rendering - EN", () => {
     }
   });
 
-  test("AboutPage: all 3 teachers", () => {
+  test("AboutPage: all teachers", () => {
     renderWithProviders(<AboutPage />);
     for (const t of teachers) {
       expect(screen.getByText(t.name.en)).toBeInTheDocument();
