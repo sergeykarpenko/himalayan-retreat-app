@@ -2,7 +2,7 @@ export interface Teacher {
   name: { en: string; ru: string };
   role: { en: string; ru: string };
   bio: { en: string; ru: string };
-  photo?: string;
+  photo?: { src: string; width: number; height: number };
 }
 
 export const aboutText = {
@@ -23,7 +23,7 @@ export const aboutText = {
 export const teachers: Teacher[] = [
   {
     name: { en: "Serhii", ru: "Сергий" },
-    photo: "/team/serhii-karpenko.webp",
+    photo: { src: "/team/serhii-karpenko.webp", width: 800, height: 1200 },
     role: {
       en: "Retreat Facilitator, Co-founder",
       ru: "Ведущий ретритов, сооснователь",
@@ -35,7 +35,7 @@ export const teachers: Teacher[] = [
   },
   {
     name: { en: "Olena", ru: "Олена" },
-    photo: "/team/olena-ruta.webp",
+    photo: { src: "/team/olena-ruta.webp", width: 800, height: 1200 },
     role: {
       en: "Integration Facilitator, Co-founder",
       ru: "Фасилитатор интеграции, сооснователь",
@@ -47,6 +47,7 @@ export const teachers: Teacher[] = [
   },
   {
     name: { en: "Olesya", ru: "Олеся" },
+    photo: { src: "/team/olesya-dembitskaya.webp", width: 449, height: 449 },
     role: {
       en: "Apprentice Facilitator",
       ru: "Подмастерье",

@@ -38,10 +38,10 @@ export function AboutPage() {
             >
               {teacher.photo && (
                 <img
-                  src={teacher.photo}
+                  src={teacher.photo.src}
                   alt={teacher.name[language]}
-                  width={800}
-                  height={1200}
+                  width={teacher.photo.width}
+                  height={teacher.photo.height}
                   loading="lazy"
                   className="aspect-[4/3] w-full object-cover object-top"
                 />

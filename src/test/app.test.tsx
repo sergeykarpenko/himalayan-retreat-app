@@ -375,11 +375,14 @@ describe("Audio playback", () => {
   });
 
   test("official team portraits are configured", () => {
-    expect(teachers.find((teacher) => teacher.name.en === "Serhii")?.photo).toBe(
+    expect(teachers.find((teacher) => teacher.name.en === "Serhii")?.photo?.src).toBe(
       "/team/serhii-karpenko.webp",
     );
-    expect(teachers.find((teacher) => teacher.name.en === "Olena")?.photo).toBe(
+    expect(teachers.find((teacher) => teacher.name.en === "Olena")?.photo?.src).toBe(
       "/team/olena-ruta.webp",
+    );
+    expect(teachers.find((teacher) => teacher.name.en === "Olesya")?.photo?.src).toBe(
+      "/team/olesya-dembitskaya.webp",
     );
   });
 
