@@ -34,24 +34,38 @@ export function AboutPage() {
           {teachers.map((teacher) => (
             <div
               key={teacher.name.en}
-              className="rounded-2xl border border-border bg-card/55 backdrop-blur-md p-4"
+              className="overflow-hidden rounded-2xl border border-border bg-card/55 backdrop-blur-md"
             >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
-                  {teacher.name[language][0]}
+              {teacher.photo && (
+                <img
+                  src={teacher.photo}
+                  alt={teacher.name[language]}
+                  width={800}
+                  height={1200}
+                  loading="lazy"
+                  className="aspect-[4/3] w-full object-cover object-top"
+                />
+              )}
+              <div className="p-4">
+                <div className="flex items-center gap-3 mb-2">
+                  {!teacher.photo && (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
+                      {teacher.name[language][0]}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">
+                      {teacher.name[language]}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {teacher.role[language]}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    {teacher.name[language]}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {teacher.role[language]}
-                  </p>
-                </div>
+                <p className="text-xs text-foreground/70 leading-relaxed">
+                  {teacher.bio[language]}
+                </p>
               </div>
-              <p className="text-xs text-foreground/70 leading-relaxed">
-                {teacher.bio[language]}
-              </p>
             </div>
           ))}
         </div>

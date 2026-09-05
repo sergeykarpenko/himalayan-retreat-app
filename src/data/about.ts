@@ -2,6 +2,7 @@ export interface Teacher {
   name: { en: string; ru: string };
   role: { en: string; ru: string };
   bio: { en: string; ru: string };
+  photo?: string;
 }
 
 export const aboutText = {
@@ -14,14 +15,15 @@ export const aboutText = {
     ru: "Священный Исцеляющий Центр в Непале",
   },
   description: {
-    en: "Nestled in a mountain valley at the foot of the Annapurna range in Nepal, our center offers transformative 10-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space with its own block of rooms and ceremonial hall, supported by a 15-person team, for intimate groups of up to 16 participants.",
-    ru: "Расположенный в горной долине у подножия Аннапурны в Непале, наш центр предлагает трансформационные 10-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство со своим блоком комнат и церемониальным залом, команда сопровождения из 15 человек, камерные группы до 16 участников.",
+    en: "Nestled in a mountain valley at the foot of the Annapurna range in Nepal, our center offers transformative 9-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space with its own block of rooms and ceremonial hall, supported by a 15-person team, for intimate groups of up to 16 participants.",
+    ru: "Расположенный в горной долине у подножия Аннапурны в Непале, наш центр предлагает трансформационные 9-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство со своим блоком комнат и церемониальным залом, команда сопровождения из 15 человек, камерные группы до 16 участников.",
   },
 };
 
 export const teachers: Teacher[] = [
   {
     name: { en: "Serhii", ru: "Сергий" },
+    photo: "/team/serhii-karpenko.webp",
     role: {
       en: "Retreat Facilitator, Co-founder",
       ru: "Ведущий ретритов, сооснователь",
@@ -33,6 +35,7 @@ export const teachers: Teacher[] = [
   },
   {
     name: { en: "Olena", ru: "Олена" },
+    photo: "/team/olena-ruta.webp",
     role: {
       en: "Integration Facilitator, Co-founder",
       ru: "Фасилитатор интеграции, сооснователь",

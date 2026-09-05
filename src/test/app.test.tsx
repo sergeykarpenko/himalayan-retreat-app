@@ -374,6 +374,15 @@ describe("Audio playback", () => {
     mockAuthenticatedSession();
   });
 
+  test("official team portraits are configured", () => {
+    expect(teachers.find((teacher) => teacher.name.en === "Serhii")?.photo).toBe(
+      "/team/serhii-karpenko.webp",
+    );
+    expect(teachers.find((teacher) => teacher.name.en === "Olena")?.photo).toBe(
+      "/team/olena-ruta.webp",
+    );
+  });
+
   afterEach(() => {
     globalThis.Audio = originalAudio;
     localStorage.removeItem("tg_user");
