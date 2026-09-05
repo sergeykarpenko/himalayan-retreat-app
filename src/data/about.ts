@@ -57,4 +57,23 @@ export const teachers: Teacher[] = [
       ru: "Специалист в области очищения и детоксикации тела. Более 35 пройденных процессов. Владеет техниками гипнотерапии и нейролингвистического программирования.",
     },
   },
+  {
+    name: {
+      en: "Yulia Gorodnichaya",
+      ru: "Юлия Городничая",
+    },
+    photo: {
+      src: "/team/nepal-school-apprentice.webp",
+      width: 853,
+      height: 1280,
+    },
+    role: {
+      en: "Hypnotherapist-Regressionist, Facilitator",
+      ru: "Гипнотерапевт-регрессолог, фасилитатор",
+    },
+    bio: {
+      en: "A student of the Nepal School of Exorcism. She practices hypnotherapy and regression work and supports retreat participants as a facilitator.",
+      ru: "Ученица Непальской школы экзорцизма. Практикует гипнотерапию и регрессионную работу, сопровождает участников ретритов в качестве фасилитатора.",
+    },
+  },
 ];

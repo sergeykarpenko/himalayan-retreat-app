@@ -384,6 +384,10 @@ describe("Audio playback", () => {
     expect(teachers.find((teacher) => teacher.name.en === "Olesya")?.photo?.src).toBe(
       "/team/olesya-dembitskaya.webp",
     );
+    expect(
+      teachers.find((teacher) => teacher.name.en === "Yulia Gorodnichaya")
+        ?.photo?.src,
+    ).toBe("/team/nepal-school-apprentice.webp");
   });
 
   afterEach(() => {
