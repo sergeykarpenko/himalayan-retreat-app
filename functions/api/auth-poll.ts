@@ -68,7 +68,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         headers: { "Set-Cookie": sessionCookie },
       },
     );
-  } catch {
-    return json({ error: "authentication_unavailable" }, { status: 502 });
+  } catch (error) {
+    return json(
+      {
+        error: "authentication_unavailable",
+        detail: error instanceof Error ? error.message : "unknown_error",
+      },
+      { status: 502 },
+    );
   }
 };
