@@ -40,7 +40,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   try {
     const res = await fetch(
       `${botAuthUrl}?token=${encodeURIComponent(token)}`,
-      { headers: upstreamHeaders, redirect: "error" },
+      { headers: upstreamHeaders },
     );
 
     if (res.status === 202) {
