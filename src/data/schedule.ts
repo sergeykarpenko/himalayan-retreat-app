@@ -18,21 +18,24 @@ export const schedule: DaySchedule[] = [
   {
     date: { en: "Sep 24", ru: "24 сентября" },
     title: {
-      en: "Holy Sites & Flight to the Valley",
-      ru: "Святые места и перелёт в долину",
+      en: "Holy Sites of Kathmandu",
+      ru: "Святые места Катманду",
     },
     description: {
-      en: "Morning at the great UNESCO-listed stupa and Pashupatinath temple. A short flight to the mountain valley below Annapurna follows, with check-in at the complex. Evening: sauna, massage, time by the pool.",
-      ru: "Утро — великая ступа из списка ЮНЕСКО и Пашупатинатх. Днём — перелёт в горную долину под Аннапурной и заезд в комплекс. Вечером — сауна, массаж, отдых у бассейна.",
+      en: "A day in Kathmandu visiting the great UNESCO-listed stupa and Pashupatinath temple. In the evening, rest and preparation for the morning flight to the valley.",
+      ru: "День в Катманду: великая ступа из списка ЮНЕСКО и храм Пашупатинатх. Вечером — отдых и подготовка к утреннему перелёту в долину.",
     },
     icon: "map-pin",
   },
   {
     date: { en: "Sep 25", ru: "25 сентября" },
-    title: { en: "Settling-In Day", ru: "День настройки" },
+    title: {
+      en: "Morning Flight & Settling In",
+      ru: "Утренний перелёт и день настройки",
+    },
     description: {
-      en: "A quiet day: breathwork, yoga, a light breakfast. Time to set intentions and talk with the facilitators ahead of the ceremony cycle. Early rest — tomorrow is the full moon.",
-      ru: "Тихое утро: дыхательные практики, йога, лёгкий завтрак. День посвящён подготовке к циклу церемоний — намерение, беседы с ведущими, ранний отдых. Завтра полнолуние.",
+      en: "A morning flight to the mountain valley below Annapurna and check-in at the complex. A quiet day to settle in, set intentions, and talk with the facilitators ahead of the ceremony cycle. Early rest — tomorrow is the full moon.",
+      ru: "Утром — перелёт в горную долину под Аннапурной и заезд в комплекс. Спокойный день для размещения, настройки намерения и бесед с ведущими перед циклом церемоний. Ранний отдых — завтра полнолуние.",
     },
     icon: "leaf",
   },
@@ -83,15 +86,6 @@ export const schedule: DaySchedule[] = [
   },
   {
     date: { en: "Oct 1", ru: "1 октября" },
-    title: { en: "Wild Mountain Honey Hunt", ru: "Охота за диким горным мёдом" },
-    description: {
-      en: "A trip to the high mountains for an ancient practice of Himalayan tribes: honey gathered from cliff faces in full protective gear. The group prepares, watches local honey hunters at work, and can take part if they wish. Evening: farewell dinner.",
-      ru: "Выезд в высокогорный массив — древняя практика гималайских племён: мёд собирают со скальных уступов в полной защитной экипировке. Группа проходит подготовку, наблюдает за работой местных мастеров и при желании участвует в процессе. Вечером — прощальный ужин.",
-    },
-    icon: "sun",
-  },
-  {
-    date: { en: "Oct 2", ru: "2 октября" },
     title: { en: "Departure", ru: "Выезд" },
     description: {
       en: "Breakfast, personalized farewell gifts, transfer to the local airport and a short flight back to Kathmandu. Guests with later flights can use a rest room at the hotel for one final walk through Thamel.",

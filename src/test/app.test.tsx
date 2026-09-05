@@ -49,8 +49,21 @@ function mockAuthenticatedSession(paid = false) {
 // ── Data integrity ──────────────────────────────────────────────
 
 describe("Data integrity", () => {
-  test("schedule has 10 days", () => {
-    expect(schedule).toHaveLength(10);
+  test("schedule has 9 days and departs on Oct 1", () => {
+    expect(schedule).toHaveLength(9);
+    expect(schedule.at(-1)?.date).toEqual({ en: "Oct 1", ru: "1 октября" });
+  });
+
+  test("schedule places the valley flight on Sep 25 and excludes honey hunting", () => {
+    const sep24 = schedule.find((day) => day.date.en === "Sep 24");
+    const sep25 = schedule.find((day) => day.date.en === "Sep 25");
+    const allCopy = JSON.stringify(schedule).toLowerCase();
+
+    expect(sep24?.description.en).toContain("morning flight to the valley");
+    expect(sep25?.description.en).toContain("A morning flight");
+    expect(sep25?.description.ru).toContain("Утром — перелёт");
+    expect(allCopy).not.toContain("honey");
+    expect(allCopy).not.toContain("мёд");
   });
 
   test("every schedule day has EN+RU date, title, and description", () => {
