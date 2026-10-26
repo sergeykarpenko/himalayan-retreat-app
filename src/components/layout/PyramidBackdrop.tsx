@@ -1,16 +1,28 @@
 import { useMemo } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getApproachIntensity } from "@/lib/retreatCountdown";
+import { getApproachIntensity, parseRetreatStart } from "@/lib/retreatCountdown";
+import { useRetreat } from "@/hooks/useRetreat";
 
 /**
  * Ambient pyramid horizon, dark theme only. The apex glow is the temple's
  * future capstone and the neural network's data-center core in one image —
- * its intensity rises as the September retreat approaches, so the backdrop
- * itself quietly tracks the countdown.
+ * its intensity rises as the next retreat approaches, so the backdrop itself
+ * quietly tracks the countdown.
+ *
+ * Дата потока берётся с сайта (/api/retreat), а не вшита: от прошедшей даты
+ * свечение просто горело на полную, то есть «следило» ни за чем. Запрос
+ * дешёвый — тот же, что на главной, и отдаётся с max-age=300, так что второй
+ * вызов попадает в кэш браузера. Пока даты нет — ровное неяркое свечение.
  */
 export function PyramidBackdrop() {
   const { t } = useLanguage();
-  const intensity = useMemo(() => getApproachIntensity(), []);
+  const retreatState = useRetreat();
+  const startDate =
+    retreatState.status === "ready" ? retreatState.retreat.startDate : null;
+  const intensity = useMemo(
+    () => getApproachIntensity(parseRetreatStart(startDate)),
+    [startDate],
+  );
 
   return (
     <div

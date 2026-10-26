@@ -139,9 +139,17 @@ describe("Page rendering - EN", () => {
   test("HomePage: heading + 6 quick links + booking CTA + install banner + sign-in link", () => {
     renderWithProviders(<HomePage />);
     expect(screen.getByText("Himalayan Retreat")).toBeInTheDocument();
-    expect(screen.getByText(retreatDates.en)).toBeInTheDocument();
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(9);
+  });
+
+  test("HomePage: даты ближайшего потока вшитыми в страницу НЕ показываются", () => {
+    // Источник дат — сайт, через /api/retreat. Без ответа страница говорит
+    // «даты уточняются». Раньше здесь висела константа сентябрьского потока,
+    // и в октябре приложение звало на уже закончившийся ретрит.
+    renderWithProviders(<HomePage />);
+    expect(screen.queryByText(retreatDates.en)).not.toBeInTheDocument();
+    expect(screen.queryByText(retreatDates.ru)).not.toBeInTheDocument();
   });
 
   test("SchedulePage: Day 1 open by default", async () => {

@@ -46,6 +46,10 @@ Secrets:
   deletion backends.
 - `TELEGRAM_BOT_TOKEN`: required only by the legacy Telegram Login Widget
   callback.
+- `RETREATS_TOKEN`: bearer token for the retreat feed at
+  `https://himalayanholytemple.net/api/retreats.json`. Same value as the site's
+  `BOT_FEED_TOKEN`; without it the closed feed answers `401` and `/api/retreat`
+  reports `{ "known": false }`, so the app names no dates.
 
 Configuration:
 

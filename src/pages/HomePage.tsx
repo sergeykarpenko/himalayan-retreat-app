@@ -13,8 +13,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { InstallBanner } from "@/components/shared/InstallBanner";
 import { TelegramBrowserBanner } from "@/components/shared/TelegramBrowserBanner";
 import { SignInBanner } from "@/components/shared/SignInBanner";
-import { getDaysUntilRetreat, pluralizeRuDays } from "@/lib/retreatCountdown";
-import { retreatDates } from "@/data/schedule";
+import {
+  getDaysUntilRetreat,
+  parseRetreatStart,
+  pluralizeRuDays,
+} from "@/lib/retreatCountdown";
+import { useRetreat } from "@/hooks/useRetreat";
 
 const quickLinks = [
   {
@@ -57,7 +61,15 @@ const quickLinks = [
 
 export function HomePage() {
   const { t, language } = useLanguage();
-  const daysLeft = useMemo(() => getDaysUntilRetreat(), []);
+
+  // Даты, места и цена приходят с сайта. Вшитых дат здесь больше нет: прежняя
+  // константа показывала сентябрьский поток как предстоящий ещё в октябре.
+  const retreatState = useRetreat();
+  const retreat = retreatState.status === "ready" ? retreatState.retreat : null;
+  const daysLeft = useMemo(
+    () => getDaysUntilRetreat(parseRetreatStart(retreat?.startDate)),
+    [retreat?.startDate],
+  );
 
   return (
     <div className="animate-fade-in">
@@ -87,14 +99,36 @@ export function HomePage() {
             {t("Next retreat", "Следующий ретрит")}
           </p>
           <p className="text-base font-medium">
-            {retreatDates[language]}
+            {retreat
+              ? retreat.dates[language]
+              : retreatState.status === "loading"
+                ? t("Loading…", "Загружаем…")
+                : t("Dates to be announced", "Даты уточняются")}
           </p>
-          {daysLeft > 0 && (
+          {daysLeft !== null && daysLeft > 0 && (
             <p className="text-xs text-muted-foreground/70 mt-0.5">
               {t(
                 `${daysLeft} ${daysLeft === 1 ? "day" : "days"} until the gates open`,
                 `${daysLeft} ${pluralizeRuDays(daysLeft)} до открытия ворот`
               )}
+            </p>
+          )}
+          {retreat && retreat.spotsLeft > 0 && (
+            <p className="text-xs text-muted-foreground/70 mt-0.5">
+              {t(
+                `${retreat.spotsLeft} ${retreat.spotsLeft === 1 ? "place" : "places"} left`,
+                `Свободных мест: ${retreat.spotsLeft}`
+              )}
+            </p>
+          )}
+          {/* Цены нет — значит «по запросу». Нулём не показываем. */}
+          {retreat && retreat.priceUsd !== null && (
+            <p className="text-xs text-muted-foreground/70 mt-0.5">
+              {t(
+                `$${retreat.priceUsd.toLocaleString("en-US")}`,
+                `$${retreat.priceUsd.toLocaleString("ru-RU")}`
+              )}
+              {retreat.priceNote[language] ? ` — ${retreat.priceNote[language]}` : ""}
             </p>
           )}
         </div>
