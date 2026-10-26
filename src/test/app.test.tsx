@@ -306,6 +306,84 @@ describe("Schedule accordion", () => {
   });
 });
 
+// ── Чей это распорядок ──────────────────────────────────────────
+
+/**
+ * Распорядок в приложении принадлежит сентябрьскому потоку, а дни подписаны
+ * его датами. Пока это не сказано вслух, страница читается как расписание
+ * предстоящего ретрита — ровно та подмена, из-за которой приложение звало на
+ * закончившийся поток.
+ */
+describe("SchedulePage: чей это распорядок", () => {
+  beforeEach(() => localStorage.removeItem("language"));
+
+  function mockRetreat(retreat: Record<string, unknown> | null) {
+    vi.mocked(fetch).mockImplementation((input) => {
+      const url = String(input);
+      const headers = { "Content-Type": "application/json" };
+      if (url.includes("/api/retreat")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(retreat ?? { known: false }), { headers }),
+        );
+      }
+      if (url.includes("/api/schedule")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ days: schedule.slice(0, 1) }), { headers }),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ user: null }), { status: 401, headers }),
+      );
+    });
+  }
+
+  const upcoming = {
+    known: true,
+    id: "october-2026",
+    format: "ceremonial",
+    startDate: "2026-10-23",
+    endDate: "2026-11-01",
+    dates: { ru: "23 октября – 1 ноября", en: "October 23 – November 1" },
+    durationDays: 9,
+    capacity: 4,
+    spotsLeft: 4,
+    priceUsd: 9500,
+    priceNote: { ru: "", en: "" },
+    programmeMatches: false,
+  };
+
+  test("распорядок подписан своим потоком, даже когда с сайта ничего не пришло", async () => {
+    mockRetreat(null);
+    renderWithProviders(<SchedulePage />);
+    expect(
+      await screen.findByText(/Programme of the September 23 — October 1, 2026 retreat/),
+    ).toBeInTheDocument();
+  });
+
+  test("предстоящий поток другой → сказано, что программа у него другая", async () => {
+    mockRetreat(upcoming);
+    renderWithProviders(<SchedulePage />);
+    expect(
+      await screen.findByText(/October 23 – November 1.*different programme/),
+    ).toBeInTheDocument();
+  });
+
+  test("распорядок от того же потока → лишнего предупреждения нет", async () => {
+    mockRetreat({ ...upcoming, id: "september-2026", programmeMatches: true });
+    renderWithProviders(<SchedulePage />);
+    expect(await screen.findByText(/Programme of the September 23/)).toBeInTheDocument();
+    expect(screen.queryByText(/different programme/)).not.toBeInTheDocument();
+  });
+
+  test("поток без строки дат не даёт пустых скобок", async () => {
+    mockRetreat({ ...upcoming, dates: { ru: "", en: "" } });
+    renderWithProviders(<SchedulePage />);
+    expect(
+      await screen.findByText(/The upcoming retreat follows a different programme/),
+    ).toBeInTheDocument();
+  });
+});
+
 // ── Guide accordion ─────────────────────────────────────────────
 
 describe("Guide accordion", () => {

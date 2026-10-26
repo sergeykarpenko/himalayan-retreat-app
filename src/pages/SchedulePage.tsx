@@ -12,6 +12,8 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTelegramLogin } from "@/hooks/useTelegramLogin";
+import { useRetreat } from "@/hooks/useRetreat";
+import { retreatDates } from "@/data/schedule";
 import { cn } from "@/lib/utils";
 
 interface DaySchedule {
@@ -34,8 +36,34 @@ export function SchedulePage() {
   const { t, language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const { loginUrl, onLinkClick } = useTelegramLogin();
+  const retreatState = useRetreat();
   const [openDay, setOpenDay] = useState<number | null>(0);
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
+
+  /**
+   * Распорядок ниже принадлежит КОНКРЕТНОМУ потоку (src/data/schedule.ts), а
+   * не «ближайшему ретриту»: дни подписаны его датами («Sep 23»). Страница
+   * поэтому называет владельца распорядка, а когда с сайта известно, что
+   * предстоящий поток другой (programmeMatches === false) — говорит и это.
+   * Молчать нельзя: подписанные днями даты читаются как расписание
+   * предстоящего ретрита, а у октябрьского ceremonial-потока и длительность,
+   * и состав другие.
+   */
+  const other =
+    retreatState.status === "ready" && !retreatState.retreat.programmeMatches
+      ? retreatState.retreat
+      : null;
+  const otherNote = !other
+    ? null
+    : other.dates[language].trim()
+      ? t(
+          `The upcoming retreat (${other.dates.en}) follows a different programme.`,
+          `У предстоящего потока (${other.dates.ru}) программа другая.`,
+        )
+      : t(
+          "The upcoming retreat follows a different programme.",
+          "У предстоящего потока программа другая.",
+        );
 
   useEffect(() => {
     if (authLoading) return;
@@ -62,6 +90,14 @@ export function SchedulePage() {
         <h2 className="text-xl font-light tracking-widest uppercase mb-2">
           {t("Schedule", "Расписание")}
         </h2>
+
+        <p className="text-xs text-muted-foreground/80 leading-relaxed mb-2">
+          {t(
+            `Programme of the ${retreatDates.en} retreat.`,
+            `Распорядок потока ${retreatDates.ru}.`,
+          )}
+          {otherNote && ` ${otherNote}`}
+        </p>
 
         {!user && (
           <a
