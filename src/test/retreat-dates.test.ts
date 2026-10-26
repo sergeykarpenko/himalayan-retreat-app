@@ -1,4 +1,4 @@
-import { onRequest } from "../../functions/api/retreat";
+import { __resetFeedCache, onRequest } from "../../functions/api/retreat";
 import {
   getApproachIntensity,
   getDaysUntilRetreat,
@@ -44,14 +44,22 @@ function sitePayload(over: Record<string, unknown> = {}) {
   };
 }
 
-function call(body: unknown, status = 200, env: Record<string, string> = {}) {
-  vi.mocked(fetch).mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  );
+// Принятый фид живёт в памяти модуля, как у бота. Между проверками его нужно
+// забывать, иначе они начинают зависеть от порядка.
+beforeEach(() => __resetFeedCache());
+
+function get(env: Record<string, string> = {}) {
   return onRequest({
     request: new Request("https://app.example/api/retreat"),
     env,
   } as never);
+}
+
+function call(body: unknown, status = 200, env: Record<string, string> = {}) {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify(body), { status }),
+  );
+  return get(env);
 }
 
 /** Что именно ушло на сайт последним запросом. */
@@ -117,16 +125,18 @@ describe("/api/retreat: ключ к фиду", () => {
 
   test("без ключа заголовка нет: открытый фид работает как раньше", async () => {
     await call(sitePayload());
-    const { headers, init } = lastRequest();
-    expect(headers.Authorization).toBeUndefined();
-    // Открытый ответ публичный, его и кэшируем.
-    expect(init.cf).toEqual({ cacheTtl: 300, cacheEverything: true });
+    expect(lastRequest().headers.Authorization).toBeUndefined();
   });
 
-  test("ответ по ключу не кладётся в общий edge-кэш", async () => {
+  test("фид не кладётся в общий edge-кэш", async () => {
     // Сайт отдаёт закрытый фид как private, а cacheEverything кэширует по URL,
-    // без заголовка в ключе: копию получил бы кто угодно без ключа.
+    // без заголовка в ключе: копию получил бы кто угодно без ключа. Поэтому
+    // принятый ответ держится в памяти изолята, а не в кэше Cloudflare.
     await call(sitePayload(), 200, { RETREATS_TOKEN: "s3cret" });
+    expect(lastRequest().init.cf).toBeUndefined();
+
+    __resetFeedCache();
+    await call(sitePayload());
     expect(lastRequest().init.cf).toBeUndefined();
   });
 
@@ -140,6 +150,106 @@ describe("/api/retreat: ключ к фиду", () => {
       RETREATS_TOKEN: "wrong",
     });
     expect(await res.json()).toEqual({ known: false });
+  });
+});
+
+describe("/api/retreat: опрос раз в сутки", () => {
+  const DAY = 86_400_000;
+  const T0 = Date.parse("2026-10-27T09:00:00Z");
+
+  /** Своё «сейчас» для TTL. today() при этом остаётся настоящим. */
+  function at(ms: number) {
+    vi.spyOn(Date, "now").mockReturnValue(ms);
+  }
+
+  test("второй запрос в тот же день сайт не беспокоит", async () => {
+    at(T0);
+    expect((await (await call(sitePayload())).json()).known).toBe(true);
+
+    at(T0 + DAY / 2);
+    const data = await (await get()).json();
+
+    expect(data.known).toBe(true);
+    expect(data.dates.ru).toBe("23 октября – 1 ноября");
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  test("через сутки фид перечитывается", async () => {
+    at(T0);
+    await call(sitePayload());
+
+    at(T0 + DAY + 1);
+    const p = sitePayload();
+    p.retreats[0].spotsLeft = 1;
+    const data = await (await call(p)).json();
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+    expect(data.spotsLeft).toBe(1);
+  });
+
+  test("RETREATS_TTL_SECONDS задаёт свой срок", async () => {
+    const env = { RETREATS_TTL_SECONDS: "300" };
+    at(T0);
+    await call(sitePayload(), 200, env);
+
+    at(T0 + 299_000);
+    await get(env);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+
+    at(T0 + 301_000);
+    await call(sitePayload(), 200, env);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+  });
+
+  test("мусор и крайности в RETREATS_TTL_SECONDS не делают опрос бешеным", async () => {
+    // "0" зажимается до минуты, а не превращается в запрос на каждый показ
+    // страницы; мусор означает «по умолчанию», то есть сутки.
+    const env = { RETREATS_TTL_SECONDS: "0" };
+    at(T0);
+    await call(sitePayload(), 200, env);
+    at(T0 + 30_000);
+    await get(env);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+
+    __resetFeedCache();
+    vi.mocked(fetch).mockClear();
+    const junk = { RETREATS_TTL_SECONDS: "скоро" };
+    at(T0);
+    await call(sitePayload(), 200, junk);
+    at(T0 + DAY / 2);
+    await get(junk);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+
+  test("сайт не ответил — отдаётся принятый фид, пока он не слишком стар", async () => {
+    at(T0);
+    await call(sitePayload());
+
+    // Сутки прошли, сайт лежит: даты у всех убирать рано — у бота на этот
+    // случай тоже есть запас сверх срока опроса.
+    at(T0 + DAY + 1);
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
+    expect((await (await get()).json()).known).toBe(true);
+  });
+
+  test("совсем старый фид не отдаётся: лучше без дат", async () => {
+    at(T0);
+    await call(sitePayload());
+
+    at(T0 + 2 * DAY + 1);
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
+    expect(await (await get()).json()).toEqual({ known: false });
+  });
+
+  test("401 не стирает уже принятый фид", async () => {
+    at(T0);
+    await call(sitePayload(), 200, { RETREATS_TOKEN: "s3cret" });
+
+    at(T0 + DAY + 1);
+    const data = await (
+      await call({ error: "unauthorized" }, 401, { RETREATS_TOKEN: "s3cret" })
+    ).json();
+    expect(data.known).toBe(true);
   });
 });
 

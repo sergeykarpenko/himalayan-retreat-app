@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
@@ -303,6 +303,97 @@ describe("Schedule accordion", () => {
     expect(
       screen.queryByText(/Individual transfer and hotel check-in in Kathmandu/)
     ).not.toBeInTheDocument();
+  });
+});
+
+// ── Обновление данных о потоке ───────────────────────────────────
+
+/**
+ * Приложение живёт как PWA: вкладку не перезагружают неделями. Без суточного
+ * обновления на экране навсегда остались бы данные того дня, когда её открыли.
+ */
+describe("Данные о потоке: обновление раз в сутки", () => {
+  const DAY = 86_400_000;
+
+  const upcoming = {
+    known: true,
+    id: "october-2026",
+    format: "ceremonial",
+    startDate: "2099-10-23",
+    endDate: "2099-11-01",
+    dates: { ru: "23 октября – 1 ноября", en: "October 23 – November 1" },
+    durationDays: 9,
+    capacity: 4,
+    spotsLeft: 4,
+    priceUsd: 9500,
+    priceNote: { ru: "", en: "" },
+    programmeMatches: false,
+  };
+
+  function mockFeed(answer: () => Promise<Response>) {
+    vi.mocked(fetch).mockImplementation((input) => {
+      const headers = { "Content-Type": "application/json" };
+      if (String(input).includes("/api/retreat")) return answer();
+      return Promise.resolve(
+        new Response(JSON.stringify({ user: null }), { status: 401, headers }),
+      );
+    });
+  }
+
+  function feedCalls() {
+    return vi
+      .mocked(fetch)
+      .mock.calls.filter((c) => String(c[0]).includes("/api/retreat")).length;
+  }
+
+  beforeEach(() => localStorage.removeItem("language"));
+
+  test("через сутки при возврате к приложению данные перечитываются", async () => {
+    mockFeed(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(upcoming), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    const base = Date.now();
+    renderWithProviders(<HomePage />);
+    expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
+    expect(feedCalls()).toBe(1);
+
+    // Переключение окна в тот же день запросов не плодит.
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(feedCalls()).toBe(1);
+
+    vi.spyOn(Date, "now").mockReturnValue(base + DAY + 60_000);
+    document.dispatchEvent(new Event("visibilitychange"));
+    await waitFor(() => expect(feedCalls()).toBe(2));
+  });
+
+  test("неудачное обновление не стирает показанные даты", async () => {
+    let first = true;
+    mockFeed(() => {
+      if (first) {
+        first = false;
+        return Promise.resolve(
+          new Response(JSON.stringify(upcoming), {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return Promise.reject(new Error("network down"));
+    });
+    const base = Date.now();
+    renderWithProviders(<HomePage />);
+    expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
+
+    vi.spyOn(Date, "now").mockReturnValue(base + DAY + 60_000);
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    await waitFor(() => expect(feedCalls()).toBe(2));
+    // Сеть моргнула — это не повод убирать даты с открытой страницы.
+    expect(screen.getByText("October 23 – November 1")).toBeInTheDocument();
+    expect(screen.queryByText("Dates to be announced")).not.toBeInTheDocument();
   });
 });
 

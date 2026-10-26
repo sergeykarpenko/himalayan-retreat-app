@@ -53,6 +53,10 @@ Secrets:
 
 Configuration:
 
+- `RETREATS_TTL_SECONDS`: how often `/api/retreat` re-reads the site's feed,
+  in seconds. Default `86400` (once a day), clamped to 60…604800; anything
+  unparseable falls back to the default. The retreat bot polls the same feed
+  every 5 minutes, so `300` makes the app match it.
 - `AUDIO_ORIGIN_URL`: private audio base URL, without the filename.
 - `BOT_AUTH_URL`: optional override of the Telegram polling endpoint.
 - `ACCOUNT_DELETION_URL`: authenticated backend endpoint that accepts account

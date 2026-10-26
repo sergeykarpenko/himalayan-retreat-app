@@ -23,6 +23,13 @@ import { scheduleRetreatId } from "../../src/data/schedule";
  * не уходит. Пока ключ не задан, заголовок не отправляется и открытый фид
  * отвечает как раньше — так развёртывание без секрета не ломается.
  *
+ * ОПРОС — РАЗ В СУТКИ. Фид читается не на каждый запрос страницы: принятый
+ * ответ живёт в памяти изолята, как `_cache` у бота, и обновляется, когда
+ * стареет больше TTL. Срок задаётся RETREATS_TTL_SECONDS, по умолчанию сутки.
+ * Это потолок, а не гарантия «ровно один запрос в сутки»: изолятов у Pages
+ * много и живут они недолго, так что сайт увидит примерно один запрос в сутки
+ * на изолят, а не один на весь мир.
+ *
  * ОТКАЗ — FAIL-CLOSED: при любой беде отдаётся { known: false } без дат.
  * Показать устаревший поток как предстоящий хуже, чем не показать никакого:
  * именно это приложение и делало. Интерфейс в этом случае говорит, что даты
@@ -34,12 +41,37 @@ interface Env {
   RETREATS_URL?: string;
   /** Ключ к закрытому фиду — то же значение, что BOT_FEED_TOKEN у сайта. */
   RETREATS_TOKEN?: string;
+  /** Как часто спрашивать сайт, в секундах. По умолчанию сутки. */
+  RETREATS_TTL_SECONDS?: string;
 }
 
 const DEFAULT_URL = "https://himalayanholytemple.net/api/retreats.json";
 
-/** Совпадает с max-age эндпоинта: чаще спрашивать нечего. */
+/** Раз в сутки: перечень потоков меняется редко и руками. */
+const DEFAULT_TTL_SECONDS = 86_400;
+
+/** Границы разумного: минута — нижний предел, неделя — верхний. */
+const MIN_TTL_SECONDS = 60;
+const MAX_TTL_SECONDS = 7 * 86_400;
+
+/**
+ * Насколько дольше TTL принятый фид ещё годится, если сайт не ответил.
+ *
+ * У бота та же развилка: опрос раз в 5 минут, но верить последнему ответу он
+ * продолжает 6 часов. Иначе одна неудачная попытка убирала бы даты у всех до
+ * следующей удачной. Даты, места и записываемость при этом перепроверяются на
+ * каждом запросе, так что закончившийся поток из памяти не вылезет.
+ */
+const STALE_FACTOR = 2;
+
+/** Сколько держать НАШ ответ у клиента: он дешёвый, но поток закрывается набором. */
 const CACHE_TTL_SECONDS = 300;
+
+function feedTtlSeconds(env: Env): number {
+  const raw = Number.parseInt((env.RETREATS_TTL_SECONDS ?? "").trim(), 10);
+  if (!Number.isFinite(raw)) return DEFAULT_TTL_SECONDS;
+  return Math.min(Math.max(raw, MIN_TTL_SECONDS), MAX_TTL_SECONDS);
+}
 
 interface SiteRetreat {
   id?: string;
@@ -93,8 +125,31 @@ function pickNext(payload: SitePayload): SiteRetreat | null {
   return r;
 }
 
-export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
-  if (request.method !== "GET") return methodNotAllowed(["GET"]);
+/**
+ * Последний принятый ответ сайта — в памяти изолята, как `_cache` у бота.
+ *
+ * Общий edge-кэш (`cf: { cacheEverything }`) для этого не годится: он
+ * кэширует по URL, без заголовка в ключе, а сайт отдаёт закрытый фид как
+ * private — копию получил бы кто угодно без ключа, и ключ перестал бы что-то
+ * значить. Память изолята никому не видна.
+ */
+let feed: { at: number; payload: SitePayload } | null = null;
+
+/** Только для тестов: забыть принятый фид, чтобы проверки не зависели друг от друга. */
+export function __resetFeedCache(): void {
+  feed = null;
+}
+
+/** Принятый фид, если сайт не ответил и он ещё не слишком стар. */
+function staleFeed(now: number, ttlSeconds: number): SitePayload | null {
+  if (!feed) return null;
+  const limit = ttlSeconds * STALE_FACTOR * 1000;
+  return now - feed.at < limit ? feed.payload : null;
+}
+
+async function readFeed(env: Env, ttlSeconds: number): Promise<SitePayload | null> {
+  const now = Date.now();
+  if (feed && now - feed.at < ttlSeconds * 1000) return feed.payload;
 
   const token = (env.RETREATS_TOKEN ?? "").trim();
   const headers: Record<string, string> = {
@@ -102,17 +157,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const init: RequestInit = { headers };
-  // Закрытый фид сайт отдаёт как private — в общий edge-кэш такой ответ класть
-  // нельзя: cacheEverything кэширует по URL, без заголовка в ключе, и копию
-  // получил бы кто угодно без ключа. Открытый фид кэшируем как раньше.
-  if (!token) {
-    init.cf = { cacheTtl: CACHE_TTL_SECONDS, cacheEverything: true };
-  }
-
-  let payload: SitePayload;
   try {
-    const res = await fetch(env.RETREATS_URL ?? DEFAULT_URL, init);
+    const res = await fetch(env.RETREATS_URL ?? DEFAULT_URL, { headers });
     if (!res.ok) {
       // 401 значит «ключ не принят», а не «сайт лежит». Без этой строки
       // причину пришлось бы искать в двух проектах Pages. Ключ не логировать.
@@ -123,12 +169,21 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
             : "retreat feed: 401 — фид закрыт, а RETREATS_TOKEN не задан",
         );
       }
-      return json(UNKNOWN, { headers: cacheHeader() });
+      return staleFeed(now, ttlSeconds);
     }
-    payload = (await res.json()) as SitePayload;
+    const payload = (await res.json()) as SitePayload;
+    feed = { at: now, payload };
+    return payload;
   } catch {
-    return json(UNKNOWN, { headers: cacheHeader() });
+    return staleFeed(now, ttlSeconds);
   }
+}
+
+export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
+  if (request.method !== "GET") return methodNotAllowed(["GET"]);
+
+  const payload = await readFeed(env, feedTtlSeconds(env));
+  if (!payload) return json(UNKNOWN, { headers: cacheHeader() });
 
   const r = pickNext(payload);
   if (!r) return json(UNKNOWN, { headers: cacheHeader() });
