@@ -309,11 +309,12 @@ describe("Schedule accordion", () => {
 // ── Обновление данных о потоке ───────────────────────────────────
 
 /**
- * Приложение живёт как PWA: вкладку не перезагружают неделями. Без суточного
- * обновления на экране навсегда остались бы данные того дня, когда её открыли.
+ * Приложение живёт как PWA: вкладку не перезагружают неделями. Без обновления
+ * на экране навсегда остались бы данные того момента, когда её открыли. Срок
+ * тот же, что у серверной части и у бота.
  */
-describe("Данные о потоке: обновление раз в сутки", () => {
-  const DAY = 86_400_000;
+describe("Данные о потоке: обновление раз в 5 минут", () => {
+  const REFRESH = 300_000;
 
   const upcoming = {
     known: true,
@@ -348,7 +349,7 @@ describe("Данные о потоке: обновление раз в сутк�
 
   beforeEach(() => localStorage.removeItem("language"));
 
-  test("через сутки при возврате к приложению данные перечитываются", async () => {
+  test("через пять минут при возврате к приложению данные перечитываются", async () => {
     mockFeed(() =>
       Promise.resolve(
         new Response(JSON.stringify(upcoming), {
@@ -361,11 +362,11 @@ describe("Данные о потоке: обновление раз в сутк�
     expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
     expect(feedCalls()).toBe(1);
 
-    // Переключение окна в тот же день запросов не плодит.
+    // Переключение окна сразу же запросов не плодит.
     document.dispatchEvent(new Event("visibilitychange"));
     expect(feedCalls()).toBe(1);
 
-    vi.spyOn(Date, "now").mockReturnValue(base + DAY + 60_000);
+    vi.spyOn(Date, "now").mockReturnValue(base + REFRESH + 60_000);
     document.dispatchEvent(new Event("visibilitychange"));
     await waitFor(() => expect(feedCalls()).toBe(2));
   });
@@ -387,7 +388,7 @@ describe("Данные о потоке: обновление раз в сутк�
     renderWithProviders(<HomePage />);
     expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
 
-    vi.spyOn(Date, "now").mockReturnValue(base + DAY + 60_000);
+    vi.spyOn(Date, "now").mockReturnValue(base + REFRESH + 60_000);
     document.dispatchEvent(new Event("visibilitychange"));
 
     await waitFor(() => expect(feedCalls()).toBe(2));

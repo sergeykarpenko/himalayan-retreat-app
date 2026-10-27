@@ -153,8 +153,9 @@ describe("/api/retreat: ключ к фиду", () => {
   });
 });
 
-describe("/api/retreat: опрос раз в сутки", () => {
-  const DAY = 86_400_000;
+describe("/api/retreat: опрос раз в 5 минут, как у бота", () => {
+  const MINUTE = 60_000;
+  const HOUR = 3_600_000;
   const T0 = Date.parse("2026-10-27T09:00:00Z");
 
   /** Своё «сейчас» для TTL. today() при этом остаётся настоящим. */
@@ -162,11 +163,11 @@ describe("/api/retreat: опрос раз в сутки", () => {
     vi.spyOn(Date, "now").mockReturnValue(ms);
   }
 
-  test("второй запрос в тот же день сайт не беспокоит", async () => {
+  test("внутри пяти минут сайт не беспокоится", async () => {
     at(T0);
     expect((await (await call(sitePayload())).json()).known).toBe(true);
 
-    at(T0 + DAY / 2);
+    at(T0 + 4 * MINUTE);
     const data = await (await get()).json();
 
     expect(data.known).toBe(true);
@@ -174,11 +175,11 @@ describe("/api/retreat: опрос раз в сутки", () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 
-  test("через сутки фид перечитывается", async () => {
+  test("через пять минут фид перечитывается", async () => {
     at(T0);
     await call(sitePayload());
 
-    at(T0 + DAY + 1);
+    at(T0 + 5 * MINUTE + 1);
     const p = sitePayload();
     p.retreats[0].spotsLeft = 1;
     const data = await (await call(p)).json();
@@ -188,26 +189,27 @@ describe("/api/retreat: опрос раз в сутки", () => {
   });
 
   test("RETREATS_TTL_SECONDS задаёт свой срок", async () => {
-    const env = { RETREATS_TTL_SECONDS: "300" };
+    const env = { RETREATS_TTL_SECONDS: "3600" };
     at(T0);
     await call(sitePayload(), 200, env);
 
-    at(T0 + 299_000);
+    // Срок свой, а не дефолтные пять минут.
+    at(T0 + 10 * MINUTE);
     await get(env);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
 
-    at(T0 + 301_000);
+    at(T0 + HOUR + 1);
     await call(sitePayload(), 200, env);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
   });
 
   test("мусор и крайности в RETREATS_TTL_SECONDS не делают опрос бешеным", async () => {
     // "0" зажимается до минуты, а не превращается в запрос на каждый показ
-    // страницы; мусор означает «по умолчанию», то есть сутки.
+    // страницы; мусор означает «по умолчанию», то есть пять минут.
     const env = { RETREATS_TTL_SECONDS: "0" };
     at(T0);
     await call(sitePayload(), 200, env);
-    at(T0 + 30_000);
+    at(T0 + MINUTE / 2);
     await get(env);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
 
@@ -216,36 +218,58 @@ describe("/api/retreat: опрос раз в сутки", () => {
     const junk = { RETREATS_TTL_SECONDS: "скоро" };
     at(T0);
     await call(sitePayload(), 200, junk);
-    at(T0 + DAY / 2);
+    at(T0 + 4 * MINUTE);
     await get(junk);
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 
-  test("сайт не ответил — отдаётся принятый фид, пока он не слишком стар", async () => {
+  test("сайт молчит полчаса — даты остаются: срок доверия шесть часов", async () => {
     at(T0);
     await call(sitePayload());
 
-    // Сутки прошли, сайт лежит: даты у всех убирать рано — у бота на этот
-    // случай тоже есть запас сверх срока опроса.
-    at(T0 + DAY + 1);
+    // Опрос давно просрочен, но у бота на этот случай тот же запас: верить
+    // последнему ответу он продолжает шесть часов.
+    at(T0 + 30 * MINUTE);
     vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
     expect((await (await get()).json()).known).toBe(true);
   });
 
-  test("совсем старый фид не отдаётся: лучше без дат", async () => {
+  test("за пределами срока доверия дат нет: лучше молчание", async () => {
     at(T0);
     await call(sitePayload());
 
-    at(T0 + 2 * DAY + 1);
+    at(T0 + 6 * HOUR + 1);
     vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
     expect(await (await get()).json()).toEqual({ known: false });
+  });
+
+  test("RETREATS_MAX_AGE_SECONDS задаёт срок доверия", async () => {
+    const env = { RETREATS_MAX_AGE_SECONDS: "600" };
+    at(T0);
+    await call(sitePayload(), 200, env);
+
+    at(T0 + 11 * MINUTE);
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
+    expect(await (await get(env)).json()).toEqual({ known: false });
+  });
+
+  test("срок доверия не бывает короче срока опроса", async () => {
+    // Иначе принятый фид успевал бы «истечь» раньше, чем его перечитают.
+    const env = { RETREATS_TTL_SECONDS: "3600", RETREATS_MAX_AGE_SECONDS: "60" };
+    at(T0);
+    await call(sitePayload(), 200, env);
+
+    at(T0 + 59 * MINUTE);
+    const data = await (await get(env)).json();
+    expect(data.known).toBe(true);
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 
   test("401 не стирает уже принятый фид", async () => {
     at(T0);
     await call(sitePayload(), 200, { RETREATS_TOKEN: "s3cret" });
 
-    at(T0 + DAY + 1);
+    at(T0 + 5 * MINUTE + 1);
     const data = await (
       await call({ error: "unauthorized" }, 401, { RETREATS_TOKEN: "s3cret" })
     ).json();

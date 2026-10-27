@@ -23,12 +23,17 @@ import { scheduleRetreatId } from "../../src/data/schedule";
  * не уходит. Пока ключ не задан, заголовок не отправляется и открытый фид
  * отвечает как раньше — так развёртывание без секрета не ломается.
  *
- * ОПРОС — РАЗ В СУТКИ. Фид читается не на каждый запрос страницы: принятый
- * ответ живёт в памяти изолята, как `_cache` у бота, и обновляется, когда
- * стареет больше TTL. Срок задаётся RETREATS_TTL_SECONDS, по умолчанию сутки.
- * Это потолок, а не гарантия «ровно один запрос в сутки»: изолятов у Pages
- * много и живут они недолго, так что сайт увидит примерно один запрос в сутки
- * на изолят, а не один на весь мир.
+ * ОПРОС — РАЗ В 5 МИНУТ, как у бота. Фид читается не на каждый запрос
+ * страницы: принятый ответ живёт в памяти изолята, как `_cache` у бота, и
+ * обновляется, когда стареет больше TTL (RETREATS_TTL_SECONDS, по умолчанию
+ * 300 — ровно TTL бота). Это потолок, а не гарантия «один запрос в 5 минут»:
+ * изолятов у Pages много и живут они недолго, так что сайт увидит примерно по
+ * запросу в 5 минут на изолят, а не один на весь мир.
+ *
+ * Срок доверия — 6 часов (RETREATS_MAX_AGE_SECONDS), тоже как у бота: пока
+ * сайт не отвечает, последний принятый фид продолжает работать, и короткая
+ * недоступность не убирает даты у всех. Данные старше этого срока не
+ * используются вовсе.
  *
  * ОТКАЗ — FAIL-CLOSED: при любой беде отдаётся { known: false } без дат.
  * Показать устаревший поток как предстоящий хуже, чем не показать никакого:
@@ -41,36 +46,49 @@ interface Env {
   RETREATS_URL?: string;
   /** Ключ к закрытому фиду — то же значение, что BOT_FEED_TOKEN у сайта. */
   RETREATS_TOKEN?: string;
-  /** Как часто спрашивать сайт, в секундах. По умолчанию сутки. */
+  /** Как часто спрашивать сайт, в секундах. По умолчанию 300 — как у бота. */
   RETREATS_TTL_SECONDS?: string;
+  /** Сколько верить последнему ответу, если сайт молчит. По умолчанию 6 часов. */
+  RETREATS_MAX_AGE_SECONDS?: string;
 }
 
 const DEFAULT_URL = "https://himalayanholytemple.net/api/retreats.json";
 
-/** Раз в сутки: перечень потоков меняется редко и руками. */
-const DEFAULT_TTL_SECONDS = 86_400;
+/** Раз в 5 минут: совпадает с HDT_RETREATS_TTL бота. */
+const DEFAULT_TTL_SECONDS = 300;
+
+/**
+ * Жёсткий потолок достоверности: данные старше — «неизвестно», а не «пусть
+ * будет хоть что-то». Шесть часов — то же, что HDT_RETREATS_MAX_AGE у бота:
+ * сутки по памяти даты называть нельзя, а пережить получасовую недоступность
+ * сайта надо. Даты, места и записываемость при этом перепроверяются на каждом
+ * запросе, так что закончившийся поток из памяти не вылезет.
+ */
+const DEFAULT_MAX_AGE_SECONDS = 6 * 3600;
 
 /** Границы разумного: минута — нижний предел, неделя — верхний. */
 const MIN_TTL_SECONDS = 60;
 const MAX_TTL_SECONDS = 7 * 86_400;
 
-/**
- * Насколько дольше TTL принятый фид ещё годится, если сайт не ответил.
- *
- * У бота та же развилка: опрос раз в 5 минут, но верить последнему ответу он
- * продолжает 6 часов. Иначе одна неудачная попытка убирала бы даты у всех до
- * следующей удачной. Даты, места и записываемость при этом перепроверяются на
- * каждом запросе, так что закончившийся поток из памяти не вылезет.
- */
-const STALE_FACTOR = 2;
-
 /** Сколько держать НАШ ответ у клиента: он дешёвый, но поток закрывается набором. */
 const CACHE_TTL_SECONDS = 300;
 
+function seconds(raw: string | undefined, fallback: number): number {
+  const n = Number.parseInt((raw ?? "").trim(), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(Math.max(n, MIN_TTL_SECONDS), MAX_TTL_SECONDS);
+}
+
 function feedTtlSeconds(env: Env): number {
-  const raw = Number.parseInt((env.RETREATS_TTL_SECONDS ?? "").trim(), 10);
-  if (!Number.isFinite(raw)) return DEFAULT_TTL_SECONDS;
-  return Math.min(Math.max(raw, MIN_TTL_SECONDS), MAX_TTL_SECONDS);
+  return seconds(env.RETREATS_TTL_SECONDS, DEFAULT_TTL_SECONDS);
+}
+
+/** Верить последнему ответу меньше, чем длится сам опрос, бессмысленно. */
+function feedMaxAgeSeconds(env: Env, ttlSeconds: number): number {
+  return Math.max(
+    seconds(env.RETREATS_MAX_AGE_SECONDS, DEFAULT_MAX_AGE_SECONDS),
+    ttlSeconds,
+  );
 }
 
 interface SiteRetreat {
@@ -140,14 +158,15 @@ export function __resetFeedCache(): void {
   feed = null;
 }
 
-/** Принятый фид, если сайт не ответил и он ещё не слишком стар. */
-function staleFeed(now: number, ttlSeconds: number): SitePayload | null {
+/** Принятый фид, если сайт не ответил и он ещё в пределах срока доверия. */
+function staleFeed(now: number, maxAgeSeconds: number): SitePayload | null {
   if (!feed) return null;
-  const limit = ttlSeconds * STALE_FACTOR * 1000;
-  return now - feed.at < limit ? feed.payload : null;
+  return now - feed.at < maxAgeSeconds * 1000 ? feed.payload : null;
 }
 
-async function readFeed(env: Env, ttlSeconds: number): Promise<SitePayload | null> {
+async function readFeed(env: Env): Promise<SitePayload | null> {
+  const ttlSeconds = feedTtlSeconds(env);
+  const maxAgeSeconds = feedMaxAgeSeconds(env, ttlSeconds);
   const now = Date.now();
   if (feed && now - feed.at < ttlSeconds * 1000) return feed.payload;
 
@@ -169,20 +188,20 @@ async function readFeed(env: Env, ttlSeconds: number): Promise<SitePayload | nul
             : "retreat feed: 401 — фид закрыт, а RETREATS_TOKEN не задан",
         );
       }
-      return staleFeed(now, ttlSeconds);
+      return staleFeed(now, maxAgeSeconds);
     }
     const payload = (await res.json()) as SitePayload;
     feed = { at: now, payload };
     return payload;
   } catch {
-    return staleFeed(now, ttlSeconds);
+    return staleFeed(now, maxAgeSeconds);
   }
 }
 
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== "GET") return methodNotAllowed(["GET"]);
 
-  const payload = await readFeed(env, feedTtlSeconds(env));
+  const payload = await readFeed(env);
   if (!payload) return json(UNKNOWN, { headers: cacheHeader() });
 
   const r = pickNext(payload);
