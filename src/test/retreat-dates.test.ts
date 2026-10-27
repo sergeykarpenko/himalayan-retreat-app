@@ -21,9 +21,8 @@ const PAST = "2020-06-15";
 function sitePayload(over: Record<string, unknown> = {}) {
   return {
     next: { camp: null, ceremonial: "soon", any: "soon" },
-    formats: {
-      ceremonial: { priceNoteRu: "за программу", priceNoteEn: "per program" },
-    },
+    pricePublicRu: "Стоимость обсуждаем на созвоне.",
+    pricePublicEn: "We discuss the cost on a call.",
     retreats: [
       {
         id: "soon",
@@ -36,7 +35,7 @@ function sitePayload(over: Record<string, unknown> = {}) {
         capacity: 4,
         spotsLeft: 4,
         status: "open",
-        priceUsd: 9500,
+        audience: "men",
         bookable: true,
       },
     ],
@@ -72,7 +71,7 @@ function lastRequest() {
 }
 
 describe("/api/retreat", () => {
-  test("отдаёт даты, места и цену ближайшего потока", async () => {
+  test("отдаёт даты, пол, места и условия ближайшего потока", async () => {
     const res = await call(sitePayload());
     const data = await res.json();
 
@@ -83,8 +82,11 @@ describe("/api/retreat", () => {
       en: "October 23 – November 1",
     });
     expect(data.spotsLeft).toBe(4);
-    expect(data.priceUsd).toBe(9500);
-    expect(data.priceNote.ru).toBe("за программу");
+    expect(data.audience).toBe("men");
+    expect(data.pricePublic.ru).toBe("Стоимость обсуждаем на созвоне.");
+    expect(data.pricePublic.en).toBe("We discuss the cost on a call.");
+    // Цифры цены нет ни в фиде, ни в ответе — решение сайта от 08.10.2026.
+    expect(data.priceUsd).toBeUndefined();
   });
 
   test("кэшируется недолго: поток закрывается набором", async () => {
@@ -101,13 +103,30 @@ describe("/api/retreat", () => {
     expect(data.programmeMatches).toBe(false);
   });
 
-  test("отсутствие цены — null, а не ноль", async () => {
+  test("смешанный поток — пол пустой, а не выдуманный", async () => {
     const p = sitePayload();
-    p.retreats[0].priceUsd = null;
+    delete (p.retreats[0] as Record<string, unknown>).audience;
     const data = await (await call(p)).json();
     expect(data.known).toBe(true);
-    expect(data.priceUsd).toBeNull();
+    expect(data.audience).toBe("");
     expect(data.dates.ru).toBe("23 октября – 1 ноября");
+  });
+
+  test("незнакомый пол потока в интерфейс не попадает", async () => {
+    // Сайт заводит новые значения раньше, чем приложение узнаёт, как их
+    // называть по-русски и по-английски. Лучше промолчать, чем показать код.
+    const p = sitePayload();
+    p.retreats[0].audience = "nonbinary";
+    const data = await (await call(p)).json();
+    expect(data.audience).toBe("");
+  });
+
+  test("фразы о стоимости своей нет: нет в фиде — нет и в ответе", async () => {
+    const p = sitePayload();
+    delete (p as Record<string, unknown>).pricePublicRu;
+    delete (p as Record<string, unknown>).pricePublicEn;
+    const data = await (await call(p)).json();
+    expect(data.pricePublic).toEqual({ ru: "", en: "" });
   });
 });
 

@@ -31,9 +31,10 @@ export interface RetreatInfo {
   durationDays: number | null;
   capacity: number | null;
   spotsLeft: number;
-  /** null — «цена по запросу». Показывать нулём нельзя. */
-  priceUsd: number | null;
-  priceNote: { ru: string; en: string };
+  /** "women" | "men" | "" — пустое значит смешанный поток. */
+  audience: string;
+  /** Фраза сайта о стоимости. Цифры нет: её называют на созвоне. */
+  pricePublic: { ru: string; en: string };
   /** Принадлежит ли распорядок в приложении именно этому потоку. */
   programmeMatches: boolean;
 }

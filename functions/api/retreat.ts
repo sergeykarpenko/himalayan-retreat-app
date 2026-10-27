@@ -2,7 +2,7 @@ import { json, methodNotAllowed } from "../_lib/http";
 import { scheduleRetreatId } from "../../src/data/schedule";
 
 /**
- * GET /api/retreat — даты, свободные места и цена ближайшего потока.
+ * GET /api/retreat — даты, пол, свободные места и условия ближайшего потока.
  *
  * Источник — сайт: https://himalayanholytemple.net/api/retreats.json, который
  * собирается из site-config.json. Приложение держит эти данные НЕ у себя
@@ -34,6 +34,12 @@ import { scheduleRetreatId } from "../../src/data/schedule";
  * сайт не отвечает, последний принятый фид продолжает работать, и короткая
  * недоступность не убирает даты у всех. Данные старше этого срока не
  * используются вовсе.
+ *
+ * ЦЕНЫ ЗДЕСЬ НЕТ, и это решение сайта (08.10.2026): стоимость называют
+ * только на созвоне, цифры нет ни на страницах, ни в фиде. Вместо неё фид
+ * отдаёт готовую фразу (pricePublicRu/En), и приложение показывает её
+ * дословно. Своей формулировки о деньгах у приложения быть не должно: она
+ * разойдётся с сайтом при первой же правке условий.
  *
  * ОТКАЗ — FAIL-CLOSED: при любой беде отдаётся { known: false } без дат.
  * Показать устаревший поток как предстоящий хуже, чем не показать никакого:
@@ -102,15 +108,27 @@ interface SiteRetreat {
   capacity?: number | null;
   spotsLeft?: number;
   status?: string;
-  priceUsd?: number | null;
+  /** "women" | "men" | "" — пустое значит смешанный поток. */
+  audience?: string;
   bookable?: boolean;
 }
 
 interface SitePayload {
   next?: Record<string, string | null>;
-  formats?: Record<string, { priceNoteRu?: string; priceNoteEn?: string }>;
+  /** Что сайт разрешает сказать о стоимости. Цифры в фиде больше нет. */
+  pricePublicRu?: string;
+  pricePublicEn?: string;
   retreats?: SiteRetreat[];
 }
+
+/**
+ * Пол потока показываем только из известных значений.
+ *
+ * Сайт заводит новые поля раньше, чем приложение о них узнаёт. Вывести в
+ * интерфейс незнакомую строку из фида значит показать человеку внутренний код
+ * вместо слова — лучше промолчать, как сайт молчит про смешанный поток.
+ */
+const AUDIENCES = new Set(["women", "men"]);
 
 const UNKNOWN = { known: false as const };
 
@@ -207,8 +225,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   const r = pickNext(payload);
   if (!r) return json(UNKNOWN, { headers: cacheHeader() });
 
-  const fmt = payload.formats?.[String(r.format ?? "")] ?? {};
-  const price = typeof r.priceUsd === "number" && r.priceUsd > 0 ? r.priceUsd : null;
+  const audience = String(r.audience ?? "");
 
   return json(
     {
@@ -221,10 +238,15 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
       durationDays: r.durationDays ?? null,
       capacity: r.capacity ?? null,
       spotsLeft: r.spotsLeft ?? 0,
-      // null — «цена по запросу», а не «бесплатно». Интерфейс обязан
-      // показывать такой поток без цифры, а не с нулём.
-      priceUsd: price,
-      priceNote: { ru: fmt.priceNoteRu ?? "", en: fmt.priceNoteEn ?? "" },
+      // Пол потока: сайт приписывает его к дате — «16–24 ноября 2026,
+      // мужской поток». Без этого женщина читает мужской поток как свой.
+      audience: AUDIENCES.has(audience) ? audience : "",
+      // Фраза о стоимости целиком с сайта. Своей у приложения быть не может:
+      // цену называют на созвоне, и что именно обещать — решает сайт.
+      pricePublic: {
+        ru: payload.pricePublicRu ?? "",
+        en: payload.pricePublicEn ?? "",
+      },
       // Принадлежит ли распорядок по дням, который лежит в приложении, именно
       // этому потоку. Если нет — выдавать его за программу предстоящего
       // ретрита нельзя: форматы различаются и по длительности, и по составу.

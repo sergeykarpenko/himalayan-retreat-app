@@ -15,34 +15,34 @@ export const aboutText = {
     ru: "Священный Исцеляющий Центр в Непале",
   },
   description: {
-    en: "Nestled in a mountain valley at the foot of the Annapurna range in Nepal, our center offers transformative 9-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space with its own block of rooms and ceremonial hall, supported by a 15-person team, for intimate groups of up to 16 participants.",
-    ru: "Расположенный в горной долине у подножия Аннапурны в Непале, наш центр предлагает трансформационные 9-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство со своим блоком комнат и церемониальным залом, команда сопровождения из 15 человек, камерные группы до 16 участников.",
+    en: "Set in a mountain valley in the Himalayas, Nepal, our center offers transformative 9-day retreat experiences combining sacred ceremonies with integration work, yoga, and deep self-discovery. A dedicated retreat space with its own block of rooms and ceremonial hall, supported by a 15-person team, for intimate groups of up to 4 participants.",
+    ru: "Расположенный в горной долине в Гималаях, в Непале, наш центр предлагает трансформационные 9-дневные ретриты, сочетающие священные церемонии с интеграционной работой, йогой и глубоким самопознанием. Выделенное ретритное пространство со своим блоком комнат и церемониальным залом, команда сопровождения из 15 человек, камерные группы до 4 участников.",
   },
 };
 
 export const teachers: Teacher[] = [
   {
-    name: { en: "Serhii", ru: "Сергий" },
+    name: { en: "Sergiy", ru: "Сергий" },
     photo: { src: "/team/serhii-karpenko.webp", width: 800, height: 1200 },
     role: {
       en: "Retreat Facilitator, Co-founder",
       ru: "Ведущий ретритов, сооснователь",
     },
     bio: {
-      en: "Co-founder of Himalayan Devi Temple and creator of the Himalayan Soul Portal protocol. Serhii developed the protocol through direct experience conducting 100+ ceremonies in Nepal over 4 years. His approach integrates depth psychology, psychoanalysis, and hypnotherapy. He personally leads all ceremonies.",
-      ru: "Сооснователь Himalayan Devi Temple и создатель протокола Himalayan Soul Portal. Сергий разработал протокол через непосредственный опыт проведения 100+ церемоний в Непале за 4 года. Его подход объединяет глубинную психологию, психоанализ и гипнотерапию. Лично ведёт все церемонии.",
+      en: "Co-founder of Himalayan Devi Temple and creator of the Himalayan Soul Portal protocol. Sergiy developed the protocol through direct experience conducting 100+ ceremonies in Nepal since November 2022. His approach integrates depth psychology, psychoanalysis, and hypnotherapy. He personally leads all ceremonies.",
+      ru: "Сооснователь Himalayan Devi Temple и создатель протокола Himalayan Soul Portal. Сергий разработал протокол через непосредственный опыт проведения 100+ церемоний в Непале с ноября 2022 года. Его подход объединяет глубинную психологию, психоанализ и гипнотерапию. Лично ведёт все церемонии.",
     },
   },
   {
-    name: { en: "Olena", ru: "Олена" },
+    name: { en: "Elena", ru: "Елена" },
     photo: { src: "/team/olena-ruta.webp", width: 800, height: 1200 },
     role: {
       en: "Integration Facilitator, Co-founder",
       ru: "Фасилитатор интеграции, сооснователь",
     },
     bio: {
-      en: "Co-founder of Himalayan Devi Temple. Psychoanalyst, hypnotherapist, and certified psychologist with 28 years of experience and over 5,000 clients internationally. Author of 'The Phenomenon of Suicide.' Olena guides participants through psychological preparation and deep integration work after each session.",
-      ru: "Сооснователь Himalayan Devi Temple. Психоаналитик, гипнотерапевт и сертифицированный психолог с 28-летним опытом и более 5 000 клиентов по всему миру. Автор книги «Феномен суицида». Олена проводит участников через психологическую подготовку и глубокую интеграционную работу после каждой сессии.",
+      en: "Co-founder of Himalayan Devi Temple. Psychoanalyst, hypnotherapist, and certified psychologist with 28 years of experience and over 5,000 clients internationally. Author of 'The Phenomenon of Suicide.' Elena guides participants through psychological preparation and deep integration work after each session.",
+      ru: "Сооснователь Himalayan Devi Temple. Психоаналитик, гипнотерапевт и сертифицированный психолог с 28-летним опытом и более 5 000 клиентов по всему миру. Автор книги «Феномен суицида». Елена проводит участников через психологическую подготовку и глубокую интеграционную работу после каждой сессии.",
     },
   },
   {

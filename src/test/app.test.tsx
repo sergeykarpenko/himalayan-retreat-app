@@ -52,9 +52,10 @@ describe("Data integrity", () => {
   test("schedule has 9 days and departs on Oct 1", () => {
     expect(schedule).toHaveLength(9);
     expect(schedule.at(-1)?.date).toEqual({ en: "Oct 1", ru: "1 октября" });
+    // Подпись — дословно datesEn/datesRu потока september-2026 с сайта.
     expect(retreatDates).toEqual({
-      en: "September 23 — October 1, 2026",
-      ru: "23 сентября — 1 октября 2026",
+      en: "September 23 – October 2, 2026",
+      ru: "23 сентября – 2 октября 2026",
     });
   });
 
@@ -154,9 +155,9 @@ describe("Page rendering - EN", () => {
 
   test("SchedulePage: Day 1 open by default", async () => {
     renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText("Arrival in Kathmandu")).toBeInTheDocument();
+    expect(await screen.findByText("Arrival in Nepal")).toBeInTheDocument();
     expect(
-      screen.getByText(/Individual transfer and hotel check-in in Kathmandu/)
+      screen.getByText(/Individual transfer and hotel check-in on arrival/)
     ).toBeInTheDocument();
   });
 
@@ -229,13 +230,13 @@ describe("Page rendering - RU", () => {
 
   test("SchedulePage: Russian day titles", async () => {
     renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText("Прилёт в Катманду")).toBeInTheDocument();
+    expect(await screen.findByText("Прилёт в Непал")).toBeInTheDocument();
   });
 
   test("AboutPage: Russian teacher names", () => {
     renderWithProviders(<AboutPage />);
     expect(screen.getByText("Сергий")).toBeInTheDocument();
-    expect(screen.getByText("Олена")).toBeInTheDocument();
+    expect(screen.getByText("Елена")).toBeInTheDocument();
     expect(screen.getByText("Олеся")).toBeInTheDocument();
   });
 });
@@ -293,7 +294,7 @@ describe("Schedule accordion", () => {
     mockAuthenticatedSession();
     const user = userEvent.setup();
     renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText(/Individual transfer and hotel check-in in Kathmandu/)).toBeInTheDocument();
+    expect(await screen.findByText(/Individual transfer and hotel check-in on arrival/)).toBeInTheDocument();
 
     await user.click(screen.getByText("First Ceremony — Full Moon"));
 
@@ -301,7 +302,7 @@ describe("Schedule accordion", () => {
       screen.getByText(/the first ceremony with the teacher plants/)
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/Individual transfer and hotel check-in in Kathmandu/)
+      screen.queryByText(/Individual transfer and hotel check-in on arrival/)
     ).not.toBeInTheDocument();
   });
 });
@@ -326,8 +327,8 @@ describe("Данные о потоке: обновление раз в 5 мин�
     durationDays: 9,
     capacity: 4,
     spotsLeft: 4,
-    priceUsd: 9500,
-    priceNote: { ru: "", en: "" },
+    audience: "women",
+    pricePublic: { ru: "", en: "" },
     programmeMatches: false,
   };
 
@@ -349,6 +350,34 @@ describe("Данные о потоке: обновление раз в 5 мин�
 
   beforeEach(() => localStorage.removeItem("language"));
 
+  test("пол потока и фраза о стоимости — словами сайта", async () => {
+    // Сайт говорит «November 16–24, 2026, men's group» и называет цену только
+    // на созвоне. До 27.10.2026 приложение молчало и про то, и про другое:
+    // женщина читала мужской поток как свой.
+    mockFeed(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            ...upcoming,
+            audience: "men",
+            pricePublic: {
+              ru: "Стоимость обсуждаем на созвоне.",
+              en: "We discuss the cost on a call.",
+            },
+          }),
+          { headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+    renderWithProviders(<HomePage />);
+    expect(
+      await screen.findByText("October 23 – November 1, men's group"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("We discuss the cost on a call."),
+    ).toBeInTheDocument();
+  });
+
   test("через пять минут при возврате к приложению данные перечитываются", async () => {
     mockFeed(() =>
       Promise.resolve(
@@ -359,7 +388,7 @@ describe("Данные о потоке: обновление раз в 5 мин�
     );
     const base = Date.now();
     renderWithProviders(<HomePage />);
-    expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
+    expect(await screen.findByText("October 23 – November 1, women's group")).toBeInTheDocument();
     expect(feedCalls()).toBe(1);
 
     // Переключение окна сразу же запросов не плодит.
@@ -386,14 +415,14 @@ describe("Данные о потоке: обновление раз в 5 мин�
     });
     const base = Date.now();
     renderWithProviders(<HomePage />);
-    expect(await screen.findByText("October 23 – November 1")).toBeInTheDocument();
+    expect(await screen.findByText("October 23 – November 1, women's group")).toBeInTheDocument();
 
     vi.spyOn(Date, "now").mockReturnValue(base + REFRESH + 60_000);
     document.dispatchEvent(new Event("visibilitychange"));
 
     await waitFor(() => expect(feedCalls()).toBe(2));
     // Сеть моргнула — это не повод убирать даты с открытой страницы.
-    expect(screen.getByText("October 23 – November 1")).toBeInTheDocument();
+    expect(screen.getByText("October 23 – November 1, women's group")).toBeInTheDocument();
     expect(screen.queryByText("Dates to be announced")).not.toBeInTheDocument();
   });
 });
@@ -439,8 +468,8 @@ describe("SchedulePage: чей это распорядок", () => {
     durationDays: 9,
     capacity: 4,
     spotsLeft: 4,
-    priceUsd: 9500,
-    priceNote: { ru: "", en: "" },
+    audience: "women",
+    pricePublic: { ru: "", en: "" },
     programmeMatches: false,
   };
 
@@ -448,7 +477,7 @@ describe("SchedulePage: чей это распорядок", () => {
     mockRetreat(null);
     renderWithProviders(<SchedulePage />);
     expect(
-      await screen.findByText(/Programme of the September 23 — October 1, 2026 retreat/),
+      await screen.findByText(/Programme of the September 23 – October 2, 2026 retreat/),
     ).toBeInTheDocument();
   });
 
@@ -558,10 +587,10 @@ describe("Audio playback", () => {
   });
 
   test("official team portraits are configured", () => {
-    expect(teachers.find((teacher) => teacher.name.en === "Serhii")?.photo?.src).toBe(
+    expect(teachers.find((teacher) => teacher.name.en === "Sergiy")?.photo?.src).toBe(
       "/team/serhii-karpenko.webp",
     );
-    expect(teachers.find((teacher) => teacher.name.en === "Olena")?.photo?.src).toBe(
+    expect(teachers.find((teacher) => teacher.name.en === "Elena")?.photo?.src).toBe(
       "/team/olena-ruta.webp",
     );
     expect(teachers.find((teacher) => teacher.name.en === "Olesya")?.photo?.src).toBe(

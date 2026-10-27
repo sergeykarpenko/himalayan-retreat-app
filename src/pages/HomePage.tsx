@@ -59,6 +59,17 @@ const quickLinks = [
   },
 ];
 
+/**
+ * Пол потока приписывается к дате — так же, как на сайте: «16–24 ноября
+ * 2026, мужской поток». Слова взяты у сайта дословно (его build.js), чтобы об
+ * одном и том же потоке сайт и приложение говорили одинаково. Пустое значение
+ * — смешанный поток, и тогда сайт тоже ничего не добавляет.
+ */
+const AUDIENCE_TAIL: Record<string, { en: string; ru: string }> = {
+  men: { en: ", men's group", ru: ", мужской поток" },
+  women: { en: ", women's group", ru: ", женский поток" },
+};
+
 export function HomePage() {
   const { t, language } = useLanguage();
 
@@ -66,6 +77,7 @@ export function HomePage() {
   // константа показывала сентябрьский поток как предстоящий ещё в октябре.
   const retreatState = useRetreat();
   const retreat = retreatState.status === "ready" ? retreatState.retreat : null;
+  const audienceTail = retreat ? AUDIENCE_TAIL[retreat.audience] : undefined;
   const daysLeft = useMemo(
     () => getDaysUntilRetreat(parseRetreatStart(retreat?.startDate)),
     [retreat?.startDate],
@@ -100,7 +112,7 @@ export function HomePage() {
           </p>
           <p className="text-base font-medium">
             {retreat
-              ? retreat.dates[language]
+              ? `${retreat.dates[language]}${audienceTail ? audienceTail[language] : ""}`
               : retreatState.status === "loading"
                 ? t("Loading…", "Загружаем…")
                 : t("Dates to be announced", "Даты уточняются")}
@@ -121,14 +133,11 @@ export function HomePage() {
               )}
             </p>
           )}
-          {/* Цены нет — значит «по запросу». Нулём не показываем. */}
-          {retreat && retreat.priceUsd !== null && (
+          {/* Про деньги — дословная фраза сайта: цифры нет нигде, стоимость
+              называют на созвоне. Своей формулировки у приложения нет. */}
+          {retreat && retreat.pricePublic[language] && (
             <p className="text-xs text-muted-foreground/70 mt-0.5">
-              {t(
-                `$${retreat.priceUsd.toLocaleString("en-US")}`,
-                `$${retreat.priceUsd.toLocaleString("ru-RU")}`
-              )}
-              {retreat.priceNote[language] ? ` — ${retreat.priceNote[language]}` : ""}
+              {retreat.pricePublic[language]}
             </p>
           )}
         </div>

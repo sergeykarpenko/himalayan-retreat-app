@@ -101,12 +101,12 @@ export const guideSections: GuideSection[] = [
     icon: "map-pin",
     items: [
       {
-        en: "Fly to Tribhuvan International Airport (KTM), Kathmandu",
-        ru: "Прилетите в международный аэропорт Трибхуван (KTM), Катманду",
+        en: "Fly to Tribhuvan International Airport (KTM), Nepal",
+        ru: "Прилетите в международный аэропорт Трибхуван (KTM), Непал",
       },
       {
-        en: "We arrange pickup from Kathmandu (included in the package)",
-        ru: "Мы организуем трансфер из Катманду (включен в пакет)",
+        en: "We arrange pickup from the airport (included in the package)",
+        ru: "Мы организуем трансфер из аэропорта (включен в пакет)",
       },
       {
         en: "Drive to the center takes approximately 1-2 hours",
