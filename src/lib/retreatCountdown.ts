@@ -3,15 +3,6 @@
  */
 const NEPAL_OFFSET = "+05:45";
 
-/**
- * Начало потока, под который написан распорядок в src/data/schedule.ts.
- *
- * НЕ ИСПОЛЬЗОВАТЬ как «начало ближайшего ретрита»: это конкретный прошедший
- * поток. Дата ближайшего приходит с сайта через /api/retreat. Константа
- * оставлена, потому что к этому же потоку привязан распорядок.
- */
-export const SCHEDULE_RETREAT_START = new Date(`2026-09-23T00:00:00${NEPAL_OFFSET}`);
-
 /** Дату вида YYYY-MM-DD превращает в начало дня по непальскому времени. */
 export function parseRetreatStart(startDate: string | null | undefined): Date | null {
   if (!startDate || !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return null;

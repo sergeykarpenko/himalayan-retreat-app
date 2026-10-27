@@ -35,8 +35,16 @@ export interface RetreatInfo {
   audience: string;
   /** Фраза сайта о стоимости. Цифры нет: её называют на созвоне. */
   pricePublic: { ru: string; en: string };
-  /** Принадлежит ли распорядок в приложении именно этому потоку. */
-  programmeMatches: boolean;
+  /**
+   * Программа формата — словами сайта (structureRu/En). Своего распорядка по
+   * дням у приложения нет; пустая строка значит, что сайт её не дал.
+   */
+  programme: {
+    structure: { ru: string; en: string };
+    ceremonies: number | null;
+    microdosingSessions: number | null;
+    groupSize: number | null;
+  };
 }
 
 export type RetreatState =

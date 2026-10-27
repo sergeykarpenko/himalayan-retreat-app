@@ -2,7 +2,6 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./test-utils";
 
-import { retreatDates, schedule } from "@/data/schedule";
 import { teachers } from "@/data/about";
 import { guideSections } from "@/data/guide";
 import { meditations, attunements } from "@/data/meditations";
@@ -26,9 +25,6 @@ function mockAuthenticatedSession(paid = false) {
       const sections = paid ? guideSections : guideSections.slice(0, 3);
       return Promise.resolve(new Response(JSON.stringify({ sections }), { status: 200, headers }));
     }
-    if (url.includes("/api/schedule")) {
-      return Promise.resolve(new Response(JSON.stringify({ days: schedule }), { status: 200, headers }));
-    }
     return Promise.resolve(new Response(
       JSON.stringify({
         user: {
@@ -49,39 +45,6 @@ function mockAuthenticatedSession(paid = false) {
 // ── Data integrity ──────────────────────────────────────────────
 
 describe("Data integrity", () => {
-  test("schedule has 9 days and departs on Oct 1", () => {
-    expect(schedule).toHaveLength(9);
-    expect(schedule.at(-1)?.date).toEqual({ en: "Oct 1", ru: "1 октября" });
-    // Подпись — дословно datesEn/datesRu потока september-2026 с сайта.
-    expect(retreatDates).toEqual({
-      en: "September 23 – October 2, 2026",
-      ru: "23 сентября – 2 октября 2026",
-    });
-  });
-
-  test("schedule places the valley flight on Sep 25 and excludes honey hunting", () => {
-    const sep24 = schedule.find((day) => day.date.en === "Sep 24");
-    const sep25 = schedule.find((day) => day.date.en === "Sep 25");
-    const allCopy = JSON.stringify(schedule).toLowerCase();
-
-    expect(sep24?.description.en).toContain("morning flight to the valley");
-    expect(sep25?.description.en).toContain("A morning flight");
-    expect(sep25?.description.ru).toContain("Утром — перелёт");
-    expect(allCopy).not.toContain("honey");
-    expect(allCopy).not.toContain("мёд");
-  });
-
-  test("every schedule day has EN+RU date, title, and description", () => {
-    for (const day of schedule) {
-      expect(day.date.en).toBeTruthy();
-      expect(day.date.ru).toBeTruthy();
-      expect(day.title.en).toBeTruthy();
-      expect(day.title.ru).toBeTruthy();
-      expect(day.description.en).toBeTruthy();
-      expect(day.description.ru).toBeTruthy();
-    }
-  });
-
   test("all teachers have non-empty bios in both languages", () => {
     for (const t of teachers) {
       expect(t.bio.en.length).toBeGreaterThan(0);
@@ -149,22 +112,13 @@ describe("Page rendering - EN", () => {
     // «даты уточняются». Раньше здесь висела константа сентябрьского потока,
     // и в октябре приложение звало на уже закончившийся ретрит.
     renderWithProviders(<HomePage />);
-    expect(screen.queryByText(retreatDates.en)).not.toBeInTheDocument();
-    expect(screen.queryByText(retreatDates.ru)).not.toBeInTheDocument();
+    expect(screen.queryByText(/September 23/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/23 сентября/)).not.toBeInTheDocument();
   });
 
-  test("SchedulePage: Day 1 open by default", async () => {
+  test("SchedulePage: без ответа сайта программы нет", async () => {
     renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText("Arrival in Nepal")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Individual transfer and hotel check-in on arrival/)
-    ).toBeInTheDocument();
-  });
-
-  test("SchedulePage: guest receives only the public first day", async () => {
-    renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText(schedule[0].date.en)).toBeInTheDocument();
-    expect(screen.queryByText(schedule[1].date.en)).not.toBeInTheDocument();
+    expect(await screen.findByText("Dates to be announced")).toBeInTheDocument();
   });
 
   test("MeditationsPage: all tracks rendered (logged in)", () => {
@@ -228,11 +182,6 @@ describe("Page rendering - RU", () => {
     expect(screen.getByText("Гималайский Ретрит")).toBeInTheDocument();
   });
 
-  test("SchedulePage: Russian day titles", async () => {
-    renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText("Прилёт в Непал")).toBeInTheDocument();
-  });
-
   test("AboutPage: Russian teacher names", () => {
     renderWithProviders(<AboutPage />);
     expect(screen.getByText("Сергий")).toBeInTheDocument();
@@ -274,39 +223,6 @@ describe("Language switching", () => {
   });
 });
 
-// ── Schedule accordion ───────────────────────────────────────────
-
-describe("Schedule accordion", () => {
-  beforeEach(() => {
-    localStorage.removeItem("language");
-    localStorage.setItem("tg_user", JSON.stringify({ id: 1, first_name: "Test", auth_date: 1 }));
-  });
-  afterEach(() => localStorage.removeItem("tg_user"));
-
-  test("guest: API response contains only day 1", async () => {
-    localStorage.removeItem("tg_user");
-    renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText(schedule[0].date.en)).toBeInTheDocument();
-    expect(screen.queryByText(schedule[1].date.en)).not.toBeInTheDocument();
-  });
-
-  test("logged-in: click day 4 opens First Ceremony, closes day 1", async () => {
-    mockAuthenticatedSession();
-    const user = userEvent.setup();
-    renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText(/Individual transfer and hotel check-in on arrival/)).toBeInTheDocument();
-
-    await user.click(screen.getByText("First Ceremony — Full Moon"));
-
-    expect(
-      screen.getByText(/the first ceremony with the teacher plants/)
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Individual transfer and hotel check-in on arrival/)
-    ).not.toBeInTheDocument();
-  });
-});
-
 // ── Обновление данных о потоке ───────────────────────────────────
 
 /**
@@ -329,7 +245,12 @@ describe("Данные о потоке: обновление раз в 5 мин�
     spotsLeft: 4,
     audience: "women",
     pricePublic: { ru: "", en: "" },
-    programmeMatches: false,
+    programme: {
+      structure: { ru: "День 1 — заезд.", en: "Day 1 — arrival." },
+      ceremonies: 4,
+      microdosingSessions: 5,
+      groupSize: 4,
+    },
   };
 
   function mockFeed(answer: () => Promise<Response>) {
@@ -427,29 +348,44 @@ describe("Данные о потоке: обновление раз в 5 мин�
   });
 });
 
-// ── Чей это распорядок ──────────────────────────────────────────
+// ── Программа: словами сайта ────────────────────────────────────
 
 /**
- * Распорядок в приложении принадлежит сентябрьскому потоку, а дни подписаны
- * его датами. Пока это не сказано вслух, страница читается как расписание
- * предстоящего ретрита — ровно та подмена, из-за которой приложение звало на
- * закончившийся поток.
+ * Своего распорядка по дням у приложения нет. Сайт публикует на формат одну
+ * строку (structureRu/En) — её и показываем, дословно. До 27.10.2026 здесь
+ * лежали девять дней, написанные под сентябрьский поток, и страница продолжала
+ * показывать их, когда ближайшим сайт объявил ноябрьский.
  */
-describe("SchedulePage: чей это распорядок", () => {
-  beforeEach(() => localStorage.removeItem("language"));
+describe("SchedulePage: программа словами сайта", () => {
+  const upcoming = {
+    known: true,
+    id: "november-2026",
+    format: "ceremonial",
+    startDate: "2026-11-16",
+    endDate: "2026-11-24",
+    dates: { ru: "16–24 ноября 2026", en: "November 16–24, 2026" },
+    durationDays: 9,
+    capacity: 4,
+    spotsLeft: 1,
+    audience: "men",
+    pricePublic: { ru: "", en: "" },
+    programme: {
+      structure: {
+        ru: "День 1 — заезд, заселение, интеграционный круг. День 9 — завершение и отъезд.",
+        en: "Day 1 — arrival, check-in, integration circle. Day 9 — completion and departure.",
+      },
+      ceremonies: 4,
+      microdosingSessions: 5,
+      groupSize: 4,
+    },
+  };
 
   function mockRetreat(retreat: Record<string, unknown> | null) {
     vi.mocked(fetch).mockImplementation((input) => {
-      const url = String(input);
       const headers = { "Content-Type": "application/json" };
-      if (url.includes("/api/retreat")) {
+      if (String(input).includes("/api/retreat")) {
         return Promise.resolve(
           new Response(JSON.stringify(retreat ?? { known: false }), { headers }),
-        );
-      }
-      if (url.includes("/api/schedule")) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ days: schedule.slice(0, 1) }), { headers }),
         );
       }
       return Promise.resolve(
@@ -458,50 +394,81 @@ describe("SchedulePage: чей это распорядок", () => {
     });
   }
 
-  const upcoming = {
-    known: true,
-    id: "october-2026",
-    format: "ceremonial",
-    startDate: "2026-10-23",
-    endDate: "2026-11-01",
-    dates: { ru: "23 октября – 1 ноября", en: "October 23 – November 1" },
-    durationDays: 9,
-    capacity: 4,
-    spotsLeft: 4,
-    audience: "women",
-    pricePublic: { ru: "", en: "" },
-    programmeMatches: false,
-  };
+  beforeEach(() => localStorage.removeItem("language"));
+  afterEach(() => localStorage.removeItem("language"));
 
-  test("распорядок подписан своим потоком, даже когда с сайта ничего не пришло", async () => {
-    mockRetreat(null);
-    renderWithProviders(<SchedulePage />);
-    expect(
-      await screen.findByText(/Programme of the September 23 – October 2, 2026 retreat/),
-    ).toBeInTheDocument();
-  });
-
-  test("предстоящий поток другой → сказано, что программа у него другая", async () => {
+  test("структура формата показана дословно и подписана тем же потоком", async () => {
     mockRetreat(upcoming);
     renderWithProviders(<SchedulePage />);
     expect(
-      await screen.findByText(/October 23 – November 1.*different programme/),
+      await screen.findByText(
+        "Day 1 — arrival, check-in, integration circle. Day 9 — completion and departure.",
+      ),
+    ).toBeInTheDocument();
+    // Пол потока приписан к дате, как на сайте: иначе женщина читает мужской
+    // поток как свой.
+    expect(
+      screen.getByText(
+        "Programme of the November 16–24, 2026, men's group retreat.",
+      ),
     ).toBeInTheDocument();
   });
 
-  test("распорядок от того же потока → лишнего предупреждения нет", async () => {
-    mockRetreat({ ...upcoming, id: "september-2026", programmeMatches: true });
-    renderWithProviders(<SchedulePage />);
-    expect(await screen.findByText(/Programme of the September 23/)).toBeInTheDocument();
-    expect(screen.queryByText(/different programme/)).not.toBeInTheDocument();
-  });
-
-  test("поток без строки дат не даёт пустых скобок", async () => {
-    mockRetreat({ ...upcoming, dates: { ru: "", en: "" } });
+  test("по-русски — русская строка сайта", async () => {
+    localStorage.setItem("language", "ru");
+    mockRetreat(upcoming);
     renderWithProviders(<SchedulePage />);
     expect(
-      await screen.findByText(/The upcoming retreat follows a different programme/),
+      await screen.findByText(
+        "День 1 — заезд, заселение, интеграционный круг. День 9 — завершение и отъезд.",
+      ),
     ).toBeInTheDocument();
+  });
+
+  test("числа формата — тоже с сайта", async () => {
+    mockRetreat(upcoming);
+    renderWithProviders(<SchedulePage />);
+    expect(await screen.findByText("9 days")).toBeInTheDocument();
+    expect(screen.getByText("Ceremonies")).toBeInTheDocument();
+    expect(screen.getByText("Microdosing sessions")).toBeInTheDocument();
+    expect(screen.getByText("up to 4")).toBeInTheDocument();
+  });
+
+  test("ноль и пустое не показываем: это утверждение, которого сайт не делал", async () => {
+    mockRetreat({
+      ...upcoming,
+      programme: {
+        ...upcoming.programme,
+        ceremonies: 0,
+        microdosingSessions: 0,
+        groupSize: null,
+      },
+    });
+    renderWithProviders(<SchedulePage />);
+    await screen.findByText(/Day 1 — arrival/);
+    expect(screen.queryByText("Ceremonies")).not.toBeInTheDocument();
+    expect(screen.queryByText("Microdosing sessions")).not.toBeInTheDocument();
+    expect(screen.queryByText("Group")).not.toBeInTheDocument();
+  });
+
+  test("сайт не дал структуру — приложение не досочиняет", async () => {
+    mockRetreat({
+      ...upcoming,
+      programme: { ...upcoming.programme, structure: { ru: "", en: "" } },
+    });
+    renderWithProviders(<SchedulePage />);
+    expect(
+      await screen.findByText("The programme has not been published yet."),
+    ).toBeInTheDocument();
+  });
+
+  test("нет ответа с сайта — ни дат, ни программы", async () => {
+    mockRetreat(null);
+    renderWithProviders(<SchedulePage />);
+    expect(await screen.findByText("Dates to be announced")).toBeInTheDocument();
+    // Сентябрьского распорядка, который висел здесь до 27.10.2026, больше нет.
+    expect(screen.queryByText(/First Ceremony/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Day 1/)).not.toBeInTheDocument();
   });
 });
 

@@ -1,15 +1,15 @@
 import { json, methodNotAllowed } from "../_lib/http";
-import { scheduleRetreatId } from "../../src/data/schedule";
 
 /**
- * GET /api/retreat — даты, пол, свободные места и условия ближайшего потока.
+ * GET /api/retreat — даты, пол, места, условия и программа ближайшего потока.
  *
  * Источник — сайт: https://himalayanholytemple.net/api/retreats.json, который
  * собирается из site-config.json. Приложение держит эти данные НЕ у себя
  * нарочно: до 04.10.2026 дата ближайшего потока была вшита в трёх местах
  * (src/data/schedule.ts, src/lib/retreatCountdown.ts и распорядок по дням) и
  * разъехалась с сайтом — приложение показывало «Следующий ретрит: 23 сентября
- * — 1 октября 2026» уже после того, как этот поток закончился.
+ * — 1 октября 2026» уже после того, как этот поток закончился. Своего
+ * распорядка по дням у приложения с 27.10.2026 тоже нет — см. ПРОГРАММА.
  *
  * Запрос делается здесь, на сервере, а не из браузера: CSP приложения
  * (functions/_middleware.ts, public/_headers) держит connect-src 'self', то
@@ -40,6 +40,15 @@ import { scheduleRetreatId } from "../../src/data/schedule";
  * отдаёт готовую фразу (pricePublicRu/En), и приложение показывает её
  * дословно. Своей формулировки о деньгах у приложения быть не должно: она
  * разойдётся с сайтом при первой же правке условий.
+ *
+ * ПРОГРАММА — ТОЖЕ СЛОВАМИ САЙТА. До 27.10.2026 в приложении лежал свой
+ * распорядок на девять дней: заголовки, описания, «First Ceremony — Full
+ * Moon» на четвёртый день. Сайт такого не публикует — у него на формат одна
+ * строка structureRu/En, — а написан тот распорядок был под сентябрьский
+ * поток и продолжал показываться, когда ближайшим стал ноябрьский. Поэтому
+ * здесь отдаётся структура формата ТОГО потока, который сайт объявил
+ * ближайшим, и теми словами, что стоят в фиде. Своей программы у приложения
+ * быть не должно: участник прочитает её как обещание.
  *
  * ОТКАЗ — FAIL-CLOSED: при любой беде отдаётся { known: false } без дат.
  * Показать устаревший поток как предстоящий хуже, чем не показать никакого:
@@ -113,8 +122,21 @@ interface SiteRetreat {
   bookable?: boolean;
 }
 
+/**
+ * Формат потока так, как его публикует сайт: одна строка структуры по дням
+ * и числа. Ключ в `formats` — то же значение, что в retreats[].format.
+ */
+interface SiteFormat {
+  structureRu?: string;
+  structureEn?: string;
+  ceremonies?: number;
+  microdosingSessions?: number;
+  groupSize?: number | null;
+}
+
 interface SitePayload {
   next?: Record<string, string | null>;
+  formats?: Record<string, SiteFormat>;
   /** Что сайт разрешает сказать о стоимости. Цифры в фиде больше нет. */
   pricePublicRu?: string;
   pricePublicEn?: string;
@@ -226,6 +248,9 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!r) return json(UNKNOWN, { headers: cacheHeader() });
 
   const audience = String(r.audience ?? "");
+  // Структура — по формату ИМЕННО ЭТОГО потока: у церемониального и у кэмпа
+  // разные и длительность, и состав. Нет формата в фиде — нет и программы.
+  const fmt = payload.formats?.[String(r.format ?? "")] ?? {};
 
   return json(
     {
@@ -247,10 +272,15 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         ru: payload.pricePublicRu ?? "",
         en: payload.pricePublicEn ?? "",
       },
-      // Принадлежит ли распорядок по дням, который лежит в приложении, именно
-      // этому потоку. Если нет — выдавать его за программу предстоящего
-      // ретрита нельзя: форматы различаются и по длительности, и по составу.
-      programmeMatches: scheduleRetreatId === r.id,
+      // Программа — одной строкой с сайта (structureRu/En формата) плюс его
+      // же числа. Своего распорядка по дням у приложения нет: см. ПРОГРАММА
+      // в шапке файла.
+      programme: {
+        structure: { ru: fmt.structureRu ?? "", en: fmt.structureEn ?? "" },
+        ceremonies: fmt.ceremonies ?? null,
+        microdosingSessions: fmt.microdosingSessions ?? null,
+        groupSize: fmt.groupSize ?? null,
+      },
     },
     { headers: cacheHeader() },
   );

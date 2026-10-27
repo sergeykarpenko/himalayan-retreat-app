@@ -89,7 +89,7 @@ describe("MeditationsPage gating", () => {
   test("shows login prompt when no user", () => {
     renderWithProviders(<MeditationsPage />);
     expect(
-      screen.getByText("Sign in to unlock meditations, schedule and other features")
+      screen.getByText("Sign in to unlock meditations and other features")
     ).toBeInTheDocument();
     expect(screen.getByTestId("telegram-login")).toBeInTheDocument();
   });

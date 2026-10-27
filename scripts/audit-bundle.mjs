@@ -3,7 +3,6 @@ import { join } from "node:path";
 
 const forbidden = [
   "Maintain silence during designated quiet hours",
-  "First Ceremony — Full Moon",
   "Vegetarian meals are provided throughout the retreat",
   "fasting.himalayanholytemple.net",
   "/books/fenomen-suicida.pdf",

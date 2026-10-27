@@ -19,13 +19,14 @@ import {
   pluralizeRuDays,
 } from "@/lib/retreatCountdown";
 import { useRetreat } from "@/hooks/useRetreat";
+import { datesWithAudience } from "@/lib/retreatWording";
 
 const quickLinks = [
   {
     to: "/schedule",
     icon: Calendar,
     label: { en: "Schedule", ru: "Расписание" },
-    desc: { en: "Daily program", ru: "Программа по дням" },
+    desc: { en: "Retreat programme", ru: "Программа ретрита" },
   },
   {
     to: "/meditations",
@@ -59,17 +60,6 @@ const quickLinks = [
   },
 ];
 
-/**
- * Пол потока приписывается к дате — так же, как на сайте: «16–24 ноября
- * 2026, мужской поток». Слова взяты у сайта дословно (его build.js), чтобы об
- * одном и том же потоке сайт и приложение говорили одинаково. Пустое значение
- * — смешанный поток, и тогда сайт тоже ничего не добавляет.
- */
-const AUDIENCE_TAIL: Record<string, { en: string; ru: string }> = {
-  men: { en: ", men's group", ru: ", мужской поток" },
-  women: { en: ", women's group", ru: ", женский поток" },
-};
-
 export function HomePage() {
   const { t, language } = useLanguage();
 
@@ -77,7 +67,6 @@ export function HomePage() {
   // константа показывала сентябрьский поток как предстоящий ещё в октябре.
   const retreatState = useRetreat();
   const retreat = retreatState.status === "ready" ? retreatState.retreat : null;
-  const audienceTail = retreat ? AUDIENCE_TAIL[retreat.audience] : undefined;
   const daysLeft = useMemo(
     () => getDaysUntilRetreat(parseRetreatStart(retreat?.startDate)),
     [retreat?.startDate],
@@ -112,7 +101,7 @@ export function HomePage() {
           </p>
           <p className="text-base font-medium">
             {retreat
-              ? `${retreat.dates[language]}${audienceTail ? audienceTail[language] : ""}`
+              ? datesWithAudience(retreat, language)
               : retreatState.status === "loading"
                 ? t("Loading…", "Загружаем…")
                 : t("Dates to be announced", "Даты уточняются")}

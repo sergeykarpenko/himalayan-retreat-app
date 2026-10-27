@@ -4,7 +4,6 @@ import {
   getDaysUntilRetreat,
   parseRetreatStart,
 } from "@/lib/retreatCountdown";
-import { scheduleRetreatId } from "@/data/schedule";
 
 /**
  * Даты, места и цена ближайшего потока приходят с сайта.
@@ -21,6 +20,15 @@ const PAST = "2020-06-15";
 function sitePayload(over: Record<string, unknown> = {}) {
   return {
     next: { camp: null, ceremonial: "soon", any: "soon" },
+    formats: {
+      ceremonial: {
+        structureRu: "День 1 — заезд. День 9 — отъезд.",
+        structureEn: "Day 1 — arrival. Day 9 — departure.",
+        ceremonies: 4,
+        microdosingSessions: 5,
+        groupSize: 4,
+      },
+    },
     pricePublicRu: "Стоимость обсуждаем на созвоне.",
     pricePublicEn: "We discuss the cost on a call.",
     retreats: [
@@ -94,13 +102,32 @@ describe("/api/retreat", () => {
     expect(res.headers.get("Cache-Control")).toBe("public, max-age=300");
   });
 
-  test("говорит, что распорядок в приложении — от другого потока", async () => {
-    const res = await call(sitePayload());
-    const data = await res.json();
-    // В приложении лежит программа september-2026, а поток другой: выдавать
-    // её за программу предстоящего ретрита нельзя.
-    expect(scheduleRetreatId).toBe("september-2026");
-    expect(data.programmeMatches).toBe(false);
+  test("программа — строка формата с сайта, дословно", async () => {
+    const data = await (await call(sitePayload())).json();
+    // Своего распорядка по дням у приложения нет. До 27.10.2026 он лежал в
+    // src/data/schedule.ts, был написан под сентябрьский поток и уходил в
+    // интерфейс как программа любого предстоящего.
+    expect(data.programme.structure).toEqual({
+      ru: "День 1 — заезд. День 9 — отъезд.",
+      en: "Day 1 — arrival. Day 9 — departure.",
+    });
+    expect(data.programme.ceremonies).toBe(4);
+    expect(data.programme.microdosingSessions).toBe(5);
+    expect(data.programme.groupSize).toBe(4);
+    expect(data.programmeMatches).toBeUndefined();
+  });
+
+  test("программа — по формату ИМЕННО этого потока, чужой не подставляем", async () => {
+    const p = sitePayload();
+    (p.retreats[0] as Record<string, unknown>).format = "camp";
+    const data = await (await call(p)).json();
+    // Структуру фид дал только церемониальному формату. У кэмпа её нет —
+    // и показать вместо неё церемониальную значит соврать про длительность
+    // и состав.
+    expect(data.format).toBe("camp");
+    expect(data.programme.structure).toEqual({ ru: "", en: "" });
+    expect(data.programme.ceremonies).toBeNull();
+    expect(data.programme.groupSize).toBeNull();
   });
 
   test("смешанный поток — пол пустой, а не выдуманный", async () => {

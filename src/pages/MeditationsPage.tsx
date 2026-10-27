@@ -144,8 +144,8 @@ export function MeditationsPage() {
             <div>
               <p className="text-base font-medium mb-1">
                 {t(
-                  "Sign in to unlock meditations, schedule and other features",
-                  "Войдите, чтобы открыть медитации, расписание и другие функции"
+                  "Sign in to unlock meditations and other features",
+                  "Войдите, чтобы открыть медитации и другие функции"
                 )}
               </p>
               <p className="text-sm text-muted-foreground">

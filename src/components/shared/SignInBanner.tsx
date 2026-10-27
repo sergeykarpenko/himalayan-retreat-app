@@ -41,8 +41,8 @@ export function SignInBanner() {
             </p>
             <p className="text-xs text-muted-foreground">
               {t(
-                "Unlock the schedule, meditations and guide",
-                "Откройте расписание, медитации и гайд"
+                "Unlock the meditations and guide",
+                "Откройте медитации и гайд"
               )}
             </p>
           </div>
